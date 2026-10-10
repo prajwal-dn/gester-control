@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Gesture Control Home</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&amp;family=DM+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0E1A;font-family:'DM Sans',system-ui,sans-serif}
+a{text-decoration:none}
+a:focus-visible{outline:2px solid #FFFFFF;outline-offset:3px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+@keyframes floatY{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+@keyframes pulse{0%{transform:scale(0.6);opacity:0.9}100%{transform:scale(2.2);opacity:0}}
+@keyframes cursorPath{0%{left:46%;top:36%}25%{left:68%;top:26%}50%{left:62%;top:62%}75%{left:30%;top:52%}100%{left:46%;top:36%}}
+@keyframes chipIn{0%{opacity:0;transform:translateY(10px) scale(0.9)}8%{opacity:1;transform:translateY(0) scale(1)}85%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-6px) scale(0.95)}}
+@keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes dash{to{stroke-dashoffset:-60}}
+@keyframes tipGlow{0%,100%{opacity:1}50%{opacity:0.35}}
+.rise{animation:fadeUp 0.8s cubic-bezier(0.2,0.7,0.2,1) both}
+.card{transition:transform 0.25s ease,border-color 0.25s ease}
+.card:hover{transform:translateY(-6px)}
+.btn{transition:transform 0.2s ease}
+.btn:hover{transform:translateY(-2px)}
+@media (prefers-reduced-motion: reduce){
+  .rise,.card,.btn,.anim{animation:none !important;transition:none !important}
+}
+</style>
+</helmet>
+<div style="width: 100%; min-height: 100vh; box-sizing: border-box; background: #0A0E1A; color: #EEF2FF; font-family: 'DM Sans', system-ui, sans-serif; overflow-x: hidden">
+
+  <header style="max-width: 1200px; margin: 0 auto; padding: 20px 24px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px">
+    <div style="display: flex; align-items: center; gap: 12px">
+      <div style="width: 44px; height: 44px; border-radius: 12px; background: {{accent}}; display: flex; align-items: center; justify-content: center">
+        <svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#04211D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 13V5a1.5 1.5 0 0 1 3 0v6"></path><path d="M11 10V4a1.5 1.5 0 0 1 3 0v7"></path><path d="M14 10.5V6a1.5 1.5 0 0 1 3 0v8"></path><path d="M8 13l-1.6-2.2a1.5 1.5 0 0 0-2.4 1.8L7 18a6 6 0 0 0 5 3h1a6 6 0 0 0 6-6v-3"></path></svg>
+      </div>
+      <div style="font-family: 'Sora', system-ui, sans-serif; font-weight: 700; font-size: 20px">Gesture Control</div>
+    </div>
+    <nav aria-label="Page" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
+      <a href="#how" style="min-height: 44px; display: flex; align-items: center; padding: 0 16px; color: #A9B4D0; font-weight: 500; font-size: 15px">How it works</a>
+      <a href="#modes" style="min-height: 44px; display: flex; align-items: center; padding: 0 16px; color: #A9B4D0; font-weight: 500; font-size: 15px">Modes</a>
+      <a class="btn" href="Main.dc.html" style="min-height: 44px; display: flex; align-items: center; padding: 0 20px; border-radius: 12px; background: {{accent}}; color: #04211D; font-weight: 700; font-size: 15px">Launch app</a>
+    </nav>
+  </header>
+
+  <section style="max-width: 1200px; margin: 0 auto; padding: 48px 24px 72px; display: flex; flex-wrap: wrap; align-items: center; gap: 48px">
+    <div style="flex: 1 1 420px; min-width: 0; display: flex; flex-direction: column; gap: 24px">
+      <div class="rise" style="animation-delay: 0.05s; align-self: flex-start; display: flex; align-items: center; gap: 10px; padding: 8px 16px; border-radius: 999px; background: #121829; border: 1px solid #263150; font-size: 14px; font-weight: 500">
+        <span class="anim" style="width: 10px; height: 10px; border-radius: 50%; background: {{accent}}; display: block; animation: tipGlow 1.6s ease-in-out infinite"></span>
+        Works with your webcam
+      </div>
+      <h1 class="rise" style="animation-delay: 0.15s; margin: 0; font-family: 'Sora', system-ui, sans-serif; font-weight: 700; font-size: 60px; line-height: 1.05; letter-spacing: -0.02em">Control your screen with your <span style="color: {{accent}}">hands</span>.</h1>
+      <p class="rise" style="animation-delay: 0.3s; margin: 0; font-size: 19px; line-height: 1.55; color: #A9B4D0; max-width: 520px">Move the mouse by pointing. Click by pinching. Or switch to sign language and turn your letters into clear sentences with proper spaces between words.</p>
+      <div class="rise" style="animation-delay: 0.45s; display: flex; flex-wrap: wrap; gap: 12px">
+        <a class="btn" href="Main.dc.html" style="min-height: 56px; display: flex; align-items: center; gap: 10px; padding: 0 28px; border-radius: 14px; background: {{accent}}; color: #04211D; font-family: 'Sora', system-ui, sans-serif; font-weight: 700; font-size: 17px">
+          Start camera
+          <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+        </a>
+        <a class="btn" href="#how" style="min-height: 56px; display: flex; align-items: center; padding: 0 28px; border-radius: 14px; border: 1px solid #263150; background: #121829; color: #EEF2FF; font-weight: 600; font-size: 17px">See how it works</a>
+      </div>
+    </div>
+
+    <div class="rise" style="animation-delay: 0.3s; flex: 1 1 420px; min-width: 0">
+      <div style="position: relative; width: 100%; aspect-ratio: 5 / 4; background: #05070F; border: 1px solid #263150; border-radius: 24px; overflow: hidden">
+        <div class="anim" style="position: absolute; inset: 0; animation: floatY 6s ease-in-out infinite">
+          <svg aria-hidden="true" viewBox="0 0 1000 800" style="position: absolute; inset: 0; width: 100%; height: 100%">
+            <g fill="none" stroke="#1B2540" stroke-width="2"><path d="M0 200H1000M0 400H1000M0 600H1000M250 0V800M500 0V800M750 0V800"></path></g>
+            <g fill="none" stroke="{{accent}}" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="14 10" class="anim" style="animation: dash 2s linear infinite">
+              <polyline points="500,660 420,620 370,560 345,500 335,450"></polyline>
+              <polyline points="500,660 465,540 458,450 455,380 452,320"></polyline>
+              <polyline points="500,660 508,530 512,430 515,350 518,290"></polyline>
+              <polyline points="500,660 545,545 558,460 565,395 570,345"></polyline>
+              <polyline points="500,660 585,575 608,520 625,470 638,430"></polyline>
+            </g>
+            <g fill="#05070F" stroke="{{accent}}" stroke-width="5">
+              <circle cx="500" cy="660" r="12"></circle>
+              <circle cx="335" cy="450" r="12"></circle>
+              <circle cx="452" cy="320" r="12"></circle>
+              <circle cx="518" cy="290" r="12"></circle>
+              <circle cx="570" cy="345" r="12"></circle>
+              <circle cx="638" cy="430" r="12"></circle>
+            </g>
+          </svg>
+        </div>
+        <div class="anim" style="position: absolute; left: 45.2%; top: 40%; width: 40px; height: 40px; margin: -20px 0 0 -20px; border-radius: 50%; border: 3px solid {{accent}}; box-sizing: border-box; animation: pulse 2.4s ease-out infinite"></div>
+        <div class="anim" style="position: absolute; left: 46%; top: 36%; width: 44px; height: 44px; margin: -22px 0 0 -22px; border-radius: 50%; border: 3px solid {{accent}}; background: #05070F; box-sizing: border-box; animation: cursorPath 10s ease-in-out infinite"></div>
+
+        <div style="position: absolute; left: 16px; right: 16px; bottom: 16px; display: flex; gap: 8px; align-items: center; background: #121829; border: 1px solid #263150; border-radius: 14px; padding: 12px 14px">
+          <span style="font-size: 13px; color: #A9B4D0; margin-right: 6px">Sign</span>
+          <sc-for list="{{chips}}" as="c" hint-placeholder-count="5">
+            <span class="anim" style="font-family: 'Sora', system-ui, sans-serif; font-weight: 700; font-size: 18px; padding: 4px 10px; border-radius: 8px; background: {{accent}}; color: #04211D; animation: chipIn 8s ease-in-out infinite; animation-delay: {{c.delay}}">{{c.ch}}</span>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div aria-hidden="true" style="border-top: 1px solid #263150; border-bottom: 1px solid #263150; background: #0E1426; overflow: hidden; white-space: nowrap">
+    <div class="anim" style="display: inline-flex; animation: marquee 22s linear infinite; padding: 18px 0">
+      <sc-for list="{{marquee}}" as="m" hint-placeholder-count="10">
+        <span style="font-family: 'Sora', system-ui, sans-serif; font-weight: 600; font-size: 28px; padding: 0 36px; color: #a9b4d0; font-style: normal; text-decoration-line: none">{{m.word}}</span>
+      </sc-for>
+    </div>
+  </div>
+
+  <section id="how" style="max-width: 1200px; margin: 0 auto; padding: 88px 24px 24px; display: flex; flex-direction: column; gap: 40px">
+    <h2 style="margin: 0; font-family: 'Sora', system-ui, sans-serif; font-weight: 700; font-size: 40px; letter-spacing: -0.01em">Three steps. No setup screen.</h2>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px">
+      <sc-for list="{{steps}}" as="s" hint-placeholder-count="3">
+        <div class="card" style="background: #121829; border: 1px solid #263150; border-radius: 20px; padding: 28px; display: flex; flex-direction: column; gap: 14px; min-width: 0">
+          <div style="width: 44px; height: 44px; border-radius: 12px; background: {{accent}}; color: #04211D; font-family: 'Sora', system-ui, sans-serif; font-weight: 700; font-size: 20px; display: flex; align-items: center; justify-content: center">{{s.n}}</div>
+          <div style="font-family: 'Sora', system-ui, sans-serif; font-weight: 600; font-size: 22px">{{s.title}}</div>
+          <div style="font-size: 16px; line-height: 1.5; color: #A9B4D0">{{s.text}}</div>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <section id="modes" style="max-width: 1200px; margin: 0 auto; padding: 72px 24px 24px; display: flex; flex-direction: column; gap: 40px">
+    <h2 style="margin: 0; font-family: 'Sora', system-ui, sans-serif; font-weight: 700; font-size: 40px; letter-spacing: -0.01em">Pick a mode in one tap.</h2>
+    <div style="display: flex; flex-wrap: wrap; gap: 20px">
+      <a class="card" href="Main.dc.html" style="flex: 1 1 380px; min-width: 0; box-sizing: border-box; background: #121829; border: 1px solid #263150; border-radius: 24px; padding: 32px; display: flex; flex-direction: column; gap: 16px; color: #EEF2FF">
+        <svg aria-hidden="true" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="{{accent}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 7-6 2-2 6z"></path></svg>
+        <div style="font-family: 'Sora', system-ui, sans-serif; font-weight: 700; font-size: 28px">Mouse</div>
+        <div style="font-size: 17px; line-height: 1.5; color: #A9B4D0">Point to move the cursor, pinch to click. Choose Calm, Balanced or Quick smoothing so the pointer feels steady.</div>
+        <div style="color: {{accent}}; font-weight: 600; font-size: 16px">Open Mouse mode</div>
+      </a>
+      <a class="card" href="Main.dc.html" style="flex: 1 1 380px; min-width: 0; box-sizing: border-box; background: #121829; border: 1px solid #263150; border-radius: 24px; padding: 32px; display: flex; flex-direction: column; gap: 16px; color: #EEF2FF">
+        <svg aria-hidden="true" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="{{accent}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 13V5a1.5 1.5 0 0 1 3 0v6"></path><path d="M11 10V4a1.5 1.5 0 0 1 3 0v7"></path><path d="M14 10.5V6a1.5 1.5 0 0 1 3 0v8"></path><path d="M8 13l-1.6-2.2a1.5 1.5 0 0 0-2.4 1.8L7 18a6 6 0 0 0 5 3h1a6 6 0 0 0 6-6v-3"></path></svg>
+        <div style="font-family: 'Sora', system-ui, sans-serif; font-weight: 700; font-size: 28px">Sign language</div>
+        <div style="font-size: 17px; line-height: 1.5; color: #A9B4D0">Show a letter and it is added to your sentence. A big Add space button keeps every word separate.</div>
+        <div style="color: {{accent}}; font-weight: 600; font-size: 16px">Open Sign language mode</div>
+      </a>
+      <a class="card" href="Main.dc.html" style="flex: 1 1 380px; min-width: 0; box-sizing: border-box; background: #121829; border: 1px solid #263150; border-radius: 24px; padding: 32px; display: flex; flex-direction: column; gap: 16px; color: #EEF2FF">
+        <svg aria-hidden="true" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="{{accent}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M8.5 14.5a4.5 4.5 0 0 0 7 0"></path><path d="M9 9.5h.01M15 9.5h.01"></path></svg>
+        <div style="font-family: 'Sora', system-ui, sans-serif; font-weight: 700; font-size: 28px">Face masks</div>
+        <div style="font-size: 17px; line-height: 1.5; color: #A9B4D0">Switch masks on, pick one, and everyone in view gets a mask that follows their face as they move.</div>
+        <div style="color: {{accent}}; font-weight: 600; font-size: 16px">Open Face masks</div>
+      </a>
+    </div>
+  </section>
+
+  <section style="max-width: 1200px; margin: 0 auto; padding: 72px 24px 96px">
+    <div style="background: {{accent}}; color: #04211D; border-radius: 28px; padding: 56px 40px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 24px">
+      <div style="flex: 1 1 360px; font-family: 'Sora', system-ui, sans-serif; font-weight: 700; font-size: 38px; line-height: 1.1; letter-spacing: -0.01em">Ready? Raise your hand.</div>
+      <a class="btn" href="Main.dc.html" style="min-height: 56px; display: flex; align-items: center; padding: 0 32px; border-radius: 14px; background: #0A0E1A; color: #EEF2FF; font-family: 'Sora', system-ui, sans-serif; font-weight: 700; font-size: 17px">Start camera</a>
+    </div>
+  </section>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#2DD4BF","options":["#2DD4BF","#FBBF24","#A78BFA","#FB7185"]},"$preview":{"width":1440,"height":2500}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const accent = this.props.accent ?? '#2DD4BF';
+    const chips = 'HELLO'.split('').map((ch, i) => ({ ch, delay: (i * 0.7) + 's' }));
+    const words = ['Point', 'Pinch', 'Sign', 'Spell', 'Space', 'Point', 'Pinch', 'Sign', 'Spell', 'Space'];
+    const marquee = words.map((word, i) => ({ word, color: i % 2 === 0 ? '#EEF2FF' : accent }));
+    const steps = [
+      { n: 1, title: 'Allow the camera', text: 'Your webcam opens full screen so your hand is easy to see.' },
+      { n: 2, title: 'Choose a mode', text: 'Tap Mouse, Sign language or Face masks. The active mode is always highlighted.' },
+      { n: 3, title: 'Use your hand', text: 'Follow the short on-screen guide. Open it again any time with How to use.' }
+    ];
+    return { accent, chips, marquee, steps };
+  }
+}
+</script>
+</body>
+</html>

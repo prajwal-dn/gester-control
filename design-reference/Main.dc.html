@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Gesture Control</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&amp;family=DM+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0E1A;font-family:'DM Sans',system-ui,sans-serif}
+button{font-family:inherit;cursor:pointer}
+button:focus-visible{outline:2px solid #FFFFFF;outline-offset:2px}
+@keyframes faceSway{0%,100%{transform:translateX(-7%) rotate(-4deg)}50%{transform:translateX(7%) rotate(4deg)}}
+@media (prefers-reduced-motion: reduce){.sway{animation:none !important}}
+</style>
+</helmet>
+<div style="width: 100%; min-height: 100vh; box-sizing: border-box; background: #0A0E1A; color: #EEF2FF; display: flex; flex-direction: column; font-family: 'DM Sans', system-ui, sans-serif">
+
+  <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 24px; border-bottom: 1px solid #263150">
+    <div style="display: flex; align-items: center; gap: 12px">
+      <div style="width: 44px; height: 44px; border-radius: 12px; background: {{accent}}; display: flex; align-items: center; justify-content: center">
+        <svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="{{accentInk}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 13V5a1.5 1.5 0 0 1 3 0v6"></path><path d="M11 10V4a1.5 1.5 0 0 1 3 0v7"></path><path d="M14 10.5V6a1.5 1.5 0 0 1 3 0v8"></path><path d="M8 13l-1.6-2.2a1.5 1.5 0 0 0-2.4 1.8L7 18a6 6 0 0 0 5 3h1a6 6 0 0 0 6-6v-3"></path></svg>
+      </div>
+      <div style="font-family: 'Sora', system-ui, sans-serif; font-weight: 700; font-size: 20px; letter-spacing: -0.01em">Gesture Control</div>
+    </div>
+
+    <nav aria-label="Mode" style="display: flex; gap: 8px; padding: 6px; background: #121829; border: 1px solid #263150; border-radius: 18px">
+      <button onClick="{{pickMouse}}" aria-pressed="{{isMouse}}" style="display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 20px 8px 14px; border: 0; border-radius: 13px; background: {{mouseBg}}; color: {{mouseFg}}; text-align: left">
+        <svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 7-6 2-2 6z"></path></svg>
+        <span style="display: flex; flex-direction: column"><span style="font-weight: 600; font-size: 16px">Mouse</span><span style="font-size: 12px; opacity: 0.85">Move &amp; click</span></span>
+      </button>
+      <button onClick="{{pickSign}}" aria-pressed="{{isSign}}" style="display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 20px 8px 14px; border: 0; border-radius: 13px; background: {{signBg}}; color: {{signFg}}; text-align: left">
+        <svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 13V5a1.5 1.5 0 0 1 3 0v6"></path><path d="M11 10V4a1.5 1.5 0 0 1 3 0v7"></path><path d="M14 10.5V6a1.5 1.5 0 0 1 3 0v8"></path><path d="M8 13l-1.6-2.2a1.5 1.5 0 0 0-2.4 1.8L7 18a6 6 0 0 0 5 3h1a6 6 0 0 0 6-6v-3"></path></svg>
+        <span style="display: flex; flex-direction: column"><span style="font-weight: 600; font-size: 16px">Sign language</span><span style="font-size: 12px; opacity: 0.85">Letters to text</span></span>
+      </button>
+      <button onClick="{{pickMask}}" aria-pressed="{{isMask}}" style="display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 20px 8px 14px; border: 0; border-radius: 13px; background: {{maskBg}}; color: {{maskFg}}; text-align: left">
+        <svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M8.5 14.5a4.5 4.5 0 0 0 7 0"></path><path d="M9 9.5h.01M15 9.5h.01"></path></svg>
+        <span style="display: flex; flex-direction: column"><span style="font-weight: 600; font-size: 16px">Face masks</span><span style="font-size: 12px; opacity: 0.85">Pick &amp; wear</span></span>
+      </button>
+    </nav>
+
+    <div style="display: flex; align-items: center; gap: 4px">
+      <span style="font-size: 13px; color: #A9B4D0; margin-right: 6px">Colour</span>
+      <sc-for list="{{themes}}" as="t" hint-placeholder-count="4">
+        <button onClick="{{t.pick}}" aria-label="{{t.label}}" aria-pressed="{{t.pressed}}" style="width: 44px; height: 44px; border: 0; background: transparent; padding: 0; display: flex; align-items: center; justify-content: center">
+          <span style="width: 28px; height: 28px; border-radius: 50%; background: {{t.color}}; box-shadow: {{t.ring}}; display: block"></span>
+        </button>
+      </sc-for>
+      <button onClick="{{toggleHelp}}" aria-pressed="{{help}}" style="margin-left: 8px; min-height: 44px; padding: 0 16px; border-radius: 12px; border: 1px solid #263150; background: #121829; color: #EEF2FF; font-size: 14px; font-weight: 600">How to use</button>
+    </div>
+  </header>
+
+  <main style="display: flex; flex-wrap: wrap; flex: 1 1 auto; gap: 16px; padding: 16px 24px 24px">
+
+    <section aria-label="Camera" style="position: relative; flex: 999 1 560px; min-width: 0; min-height: 520px; background: #05070F; border: 1px solid #263150; border-radius: 20px; overflow: hidden; display: flex; align-items: center; justify-content: center">
+
+      <div style="position: relative; width: 100%; max-width: 980px; aspect-ratio: 5 / 3">
+        <svg aria-hidden="true" viewBox="0 0 1000 600" style="position: absolute; inset: 0; width: 100%; height: 100%">
+          <g fill="none" stroke="#1B2540" stroke-width="2">
+            <path d="M0 150H1000M0 300H1000M0 450H1000M250 0V600M500 0V600M750 0V600"></path>
+          </g>
+        </svg>
+        <svg aria-hidden="true" viewBox="0 0 1000 600" style="position: absolute; inset: 0; width: 100%; height: 100%; transform: {{h1t}}; opacity: {{h1o}}; transition: transform 0.4s ease, opacity 0.4s ease">
+          <g fill="none" stroke="{{accent}}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="500,500 430,470 385,420 360,370 345,330"></polyline>
+            <polyline points="500,500 470,400 465,330 462,270 460,220"></polyline>
+            <polyline points="500,500 505,395 508,320 510,255 512,200"></polyline>
+            <polyline points="500,500 540,405 550,340 556,285 560,240"></polyline>
+            <polyline points="500,500 572,425 590,375 603,335 612,300"></polyline>
+          </g>
+          <g fill="#05070F" stroke="{{accent}}" stroke-width="4">
+            <circle cx="500" cy="500" r="9"></circle>
+            <circle cx="345" cy="330" r="9"></circle>
+            <circle cx="460" cy="220" r="9"></circle>
+            <circle cx="512" cy="200" r="9"></circle>
+            <circle cx="560" cy="240" r="9"></circle>
+            <circle cx="612" cy="300" r="9"></circle>
+          </g>
+        </svg>
+        <svg aria-hidden="true" viewBox="0 0 1000 600" style="position: absolute; inset: 0; width: 100%; height: 100%; transform: {{h2t}}; opacity: {{h2o}}; transition: transform 0.4s ease, opacity 0.4s ease">
+          <g fill="none" stroke="{{accent}}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="500,500 430,470 385,420 360,370 345,330"></polyline>
+            <polyline points="500,500 470,400 465,330 462,270 460,220"></polyline>
+            <polyline points="500,500 505,395 508,320 510,255 512,200"></polyline>
+            <polyline points="500,500 540,405 550,340 556,285 560,240"></polyline>
+            <polyline points="500,500 572,425 590,375 603,335 612,300"></polyline>
+          </g>
+          <g fill="#05070F" stroke="{{accent}}" stroke-width="4">
+            <circle cx="500" cy="500" r="9"></circle>
+            <circle cx="345" cy="330" r="9"></circle>
+            <circle cx="460" cy="220" r="9"></circle>
+            <circle cx="512" cy="200" r="9"></circle>
+            <circle cx="560" cy="240" r="9"></circle>
+            <circle cx="612" cy="300" r="9"></circle>
+          </g>
+        </svg>
+
+        <sc-if value="{{isMouse}}" hint-placeholder-val="{{ true }}">
+          <div style="position: absolute; left: {{ringLeft}}; top: {{ringTop}}; width: 56px; height: 56px; margin: -28px 0 0 -28px; border-radius: 50%; border: 3px solid {{accent}}; box-sizing: border-box"></div>
+        </sc-if>
+
+        <sc-if value="{{isSign}}" hint-placeholder-val="{{ false }}">
+          <div style="position: absolute; left: {{signLeft}}; top: 28%; width: {{signWidth}}; height: 62%; border: 2px dashed {{accent}}; border-radius: 16px; box-sizing: border-box"></div>
+          <div style="position: absolute; left: {{signLeft}}; top: 28%; transform: translateY(-100%); background: {{accent}}; color: {{accentInk}}; font-family: 'Sora', system-ui, sans-serif; font-weight: 700; font-size: 18px; padding: 6px 14px; border-radius: 10px 10px 10px 0">Letter: H</div>
+        </sc-if>
+
+        <sc-if value="{{isMask}}" hint-placeholder-val="{{ false }}">
+          <div class="sway anim" style="position: absolute; inset: 0; animation: faceSway 6s ease-in-out infinite">
+            <div style="position: absolute; left: 39%; top: 14%; width: 22%; height: 64%; border: 3px solid #2A3558; border-radius: 50%; box-sizing: border-box"></div>
+            <div style="position: absolute; left: 44%; top: 38%; width: 2.4%; height: 3.4%; border-radius: 50%; background: #2A3558"></div>
+            <div style="position: absolute; left: 53.6%; top: 38%; width: 2.4%; height: 3.4%; border-radius: 50%; background: #2A3558"></div>
+            <div style="position: absolute; left: 33%; top: 8%; width: 34%; height: 76%; border: 2px dashed {{accent}}; border-radius: 16px; box-sizing: border-box"></div>
+            <div style="position: absolute; left: 33%; top: 8%; transform: translateY(-100%); background: {{accent}}; color: {{accentInk}}; font-family: 'Sora', system-ui, sans-serif; font-weight: 700; font-size: 15px; padding: 5px 12px; border-radius: 10px 10px 10px 0">Face tracked</div>
+            <sc-if value="{{masksOn}}" hint-placeholder-val="{{ true }}">
+              <div style="position: absolute; left: 36%; top: 30%; width: 28%; height: 24%; border-radius: 18px; background: {{accent}}; color: {{accentInk}}; display: flex; align-items: center; justify-content: center; font-family: 'Sora', system-ui, sans-serif; font-weight: 700; font-size: 20px; box-sizing: border-box">{{maskLabel}}</div>
+            </sc-if>
+          </div>
+        </sc-if>
+      </div>
+
+
+      <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 0">
+        <span style="position: absolute; left: {{chipALeft}}; bottom: 24px; opacity: {{chipAOp}}; transform: translateX(-50%); background: #121829; border: 1px solid #263150; border-radius: 999px; padding: 6px 14px; font-size: 13px; font-weight: 600; transition: left 0.4s ease">{{chipAText}}</span>
+        <span style="position: absolute; left: {{chipBLeft}}; bottom: 24px; transform: translateX(-50%); background: #121829; border: 1px solid #263150; border-radius: 999px; padding: 6px 14px; font-size: 13px; font-weight: 600; opacity: {{h2o}}; transition: left 0.4s ease, opacity 0.4s ease">{{chipBText}}</span>
+      </div>
+      <div style="position: absolute; top: 16px; left: 16px; display: flex; align-items: center; gap: 8px; background: #121829; border: 1px solid #263150; border-radius: 999px; padding: 8px 14px; font-size: 14px; font-weight: 500">
+        <span style="width: 10px; height: 10px; border-radius: 50%; background: {{accent}}; display: block"></span>
+        Camera on · {{handsLabel}}
+      </div>
+
+      <button onClick="{{toggleFull}}" style="position: absolute; top: 12px; right: 12px; min-height: 48px; display: flex; align-items: center; gap: 10px; padding: 0 18px; border-radius: 12px; border: 1px solid #263150; background: #121829; color: #EEF2FF; font-size: 15px; font-weight: 600">
+        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"></path></svg>
+        {{fullLabel}}
+      </button>
+
+      <sc-if value="{{help}}" hint-placeholder-val="{{ true }}">
+        <div role="region" aria-label="How to use" style="position: absolute; left: 16px; bottom: 16px; width: 340px; max-width: calc(100% - 32px); box-sizing: border-box; background: #121829; border: 1px solid #263150; border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 14px">
+          <div style="font-family: 'Sora', system-ui, sans-serif; font-weight: 600; font-size: 16px">{{guideTitle}}</div>
+          <sc-for list="{{guide}}" as="g" hint-placeholder-count="3">
+            <div style="display: flex; gap: 12px; align-items: flex-start">
+              <div style="flex: none; width: 28px; height: 28px; border-radius: 8px; background: {{accent}}; color: {{accentInk}}; font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center">{{g.n}}</div>
+              <div style="display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 600; font-size: 15px">{{g.title}}</span><span style="font-size: 14px; color: #A9B4D0; line-height: 1.4">{{g.text}}</span></div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+    </section>
+
+    <sc-if value="{{showPanel}}" hint-placeholder-val="{{ true }}">
+      <aside style="flex: 1 1 340px; max-width: 420px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+
+        <sc-if value="{{showHands}}" hint-placeholder-val="{{ true }}">
+        <div style="background: #121829; border: 1px solid #263150; border-radius: 20px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+          <div style="font-family: 'Sora', system-ui, sans-serif; font-weight: 600; font-size: 18px">Which hands?</div>
+          <div style="display: flex; gap: 8px">
+            <sc-for list="{{handOptions}}" as="h" hint-placeholder-count="3">
+              <button onClick="{{h.pick}}" aria-pressed="{{h.pressed}}" style="flex: 1; min-height: 64px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 14px; border: 2px solid {{h.border}}; background: {{h.bg}}; color: #EEF2FF">
+                <span style="font-weight: 600; font-size: 16px">{{h.label}}</span>
+                <span style="font-size: 12px; color: #A9B4D0">{{h.hint}}</span>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{isMouse}}" hint-placeholder-val="{{ true }}">
+          <div style="background: #121829; border: 1px solid #263150; border-radius: 20px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+            <div style="font-family: 'Sora', system-ui, sans-serif; font-weight: 600; font-size: 18px">Pointer smoothness</div>
+            <div style="font-size: 14px; color: #A9B4D0; line-height: 1.45">Higher smoothing removes hand shake. Lower smoothing reacts faster.</div>
+            <sc-for list="{{smoothOptions}}" as="o" hint-placeholder-count="3">
+              <button onClick="{{o.pick}}" aria-pressed="{{o.pressed}}" style="min-height: 64px; display: flex; flex-direction: column; justify-content: center; gap: 2px; padding: 8px 16px; border-radius: 14px; border: 2px solid {{o.border}}; background: {{o.bg}}; color: #EEF2FF; text-align: left">
+                <span style="font-weight: 600; font-size: 16px">{{o.label}}</span>
+                <span style="font-size: 13px; color: #A9B4D0">{{o.hint}}</span>
+              </button>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{isSign}}" hint-placeholder-val="{{ false }}">
+          <div style="background: #121829; border: 1px solid #263150; border-radius: 20px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+            <div style="display: flex; align-items: baseline; justify-content: space-between">
+              <div style="font-family: 'Sora', system-ui, sans-serif; font-weight: 600; font-size: 18px">Your sentence</div>
+              <div style="font-size: 13px; color: #A9B4D0">{{wordCount}}</div>
+            </div>
+            <div style="min-height: 120px; box-sizing: border-box; background: #0A0E1A; border: 1px solid #263150; border-radius: 14px; padding: 14px; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 8px; align-items: center">
+              <sc-for list="{{words}}" as="w" hint-placeholder-count="2">
+                <span style="font-family: 'Sora', system-ui, sans-serif; font-weight: 600; font-size: 20px; padding: 6px 12px; border-radius: 10px; background: #1A2238; letter-spacing: 0.04em">{{w.text}}</span>
+              </sc-for>
+              <span style="width: 3px; height: 28px; background: {{accent}}; display: block"></span>
+            </div>
+            <button onClick="{{addSpace}}" style="min-height: 64px; border: 0; border-radius: 14px; background: {{accent}}; color: {{accentInk}}; font-family: 'Sora', system-ui, sans-serif; font-weight: 700; font-size: 18px; display: flex; align-items: center; justify-content: center; gap: 10px">
+              <svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v4h16v-4"></path></svg>
+              Add space
+            </button>
+            <div style="display: flex; gap: 12px">
+              <button onClick="{{backspace}}" style="flex: 1; min-height: 52px; border-radius: 12px; border: 1px solid #263150; background: #1A2238; color: #EEF2FF; font-size: 15px; font-weight: 600">Backspace</button>
+              <button onClick="{{clearAll}}" style="flex: 1; min-height: 52px; border-radius: 12px; border: 1px solid #263150; background: #1A2238; color: #EEF2FF; font-size: 15px; font-weight: 600">Clear</button>
+            </div>
+            <button onClick="{{demoLetter}}" style="min-height: 48px; border-radius: 12px; border: 1px dashed #3A4A75; background: transparent; color: #A9B4D0; font-size: 14px; font-weight: 500">Demo: add next letter</button>
+            <div style="font-size: 13px; color: #A9B4D0; line-height: 1.45">Words stay separate. Press Add space, or lower your hand briefly, to start the next word.</div>
+          </div>
+        </sc-if>
+
+
+        <sc-if value="{{isMask}}" hint-placeholder-val="{{ false }}">
+          <div style="background: #121829; border: 1px solid #263150; border-radius: 20px; padding: 20px; display: flex; flex-direction: column; gap: 16px">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+              <div style="display: flex; flex-direction: column; gap: 2px">
+                <span style="font-family: 'Sora', system-ui, sans-serif; font-weight: 600; font-size: 18px">Face masks</span>
+                <span style="font-size: 13px; color: #A9B4D0">{{maskState}}</span>
+              </div>
+              <button role="switch" onClick="{{toggleMasks}}" aria-checked="{{masksOn}}" aria-label="Face masks on or off" style="flex: none; width: 76px; height: 44px; border-radius: 999px; border: 0; padding: 0; position: relative; background: {{switchBg}}">
+                <span style="position: absolute; top: 5px; left: {{knobLeft}}; width: 34px; height: 34px; border-radius: 50%; background: #FFFFFF; display: block; transition: left 0.2s ease"></span>
+              </button>
+            </div>
+            <div style="font-family: 'Sora', system-ui, sans-serif; font-weight: 600; font-size: 16px">Pick a mask</div>
+            <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+              <sc-for list="{{maskOptions}}" as="m" hint-placeholder-count="4">
+                <button onClick="{{m.pick}}" aria-pressed="{{m.pressed}}" style="min-height: 112px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 10px; border-radius: 14px; border: 2px solid {{m.border}}; background: {{m.bg}}; color: #EEF2FF">
+                  <span style="width: 64px; height: 44px; border: 2px dashed #3A4A75; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #A9B4D0">Image</span>
+                  <span style="font-weight: 600; font-size: 14px">{{m.label}}</span>
+                </button>
+              </sc-for>
+            </div>
+            <div style="font-size: 13px; color: #A9B4D0; line-height: 1.45">Masks follow each face as it moves, tilts or turns. Each person gets a different mask.</div>
+          </div>
+        </sc-if>
+      </aside>
+    </sc-if>
+
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const mode = s.mode || 'mouse';
+    const full = !!s.full;
+    const help = s.help === undefined ? true : !!s.help;
+    const themeId = s.theme || 'teal';
+    const smooth = s.smooth || 'balanced';
+    const text = s.text === undefined ? 'HELLO WORLD' : s.text;
+    const idx = s.letterIdx || 0;
+
+    const themeList = [
+      { id: 'teal', label: 'Teal', color: '#2DD4BF', ink: '#04211D' },
+      { id: 'amber', label: 'Amber', color: '#FBBF24', ink: '#231700' },
+      { id: 'violet', label: 'Violet', color: '#A78BFA', ink: '#1A0F3D' },
+      { id: 'rose', label: 'Rose', color: '#FB7185', ink: '#2B050C' }
+    ];
+    const cur = themeList.find((t) => t.id === themeId) || themeList[0];
+    const accent = cur.color;
+    const accentInk = cur.ink;
+
+    const themes = themeList.map((t) => ({
+      label: t.label + ' accent',
+      color: t.color,
+      pressed: t.id === themeId,
+      ring: t.id === themeId ? '0 0 0 3px #0A0E1A, 0 0 0 5px #FFFFFF' : 'none',
+      pick: () => this.setState({ theme: t.id })
+    }));
+
+    const smoothDefs = [
+      { id: 'calm', label: 'Calm', hint: 'Steadiest cursor, slight delay' },
+      { id: 'balanced', label: 'Balanced', hint: 'Recommended for most people' },
+      { id: 'quick', label: 'Quick', hint: 'Fastest response, more shake' }
+    ];
+    const smoothOptions = smoothDefs.map((o) => ({
+      label: o.label,
+      hint: o.hint,
+      pressed: o.id === smooth,
+      border: o.id === smooth ? accent : '#263150',
+      bg: o.id === smooth ? '#1A2238' : '#0A0E1A',
+      pick: () => this.setState({ smooth: o.id })
+    }));
+
+    const isMouse = mode === 'mouse';
+    const isSign = mode === 'sign';
+    const isMask = mode === 'mask';
+    const masksOn = s.masksOn === undefined ? true : !!s.masksOn;
+    const maskIdx = s.maskIdx || 0;
+
+    const hands = s.hands || 'right';
+    const both = hands === 'both';
+    const guideMouse = both ? [
+      { n: 1, title: 'Right hand moves', text: 'Point your index finger. The ring follows it.' },
+      { n: 2, title: 'Left hand clicks', text: 'Pinch thumb and index finger of your left hand to click.' },
+      { n: 3, title: 'Keep both hands in view', text: 'Both hands should stay inside the camera view.' }
+    ] : [
+      { n: 1, title: 'Raise one finger', text: 'Point your ' + hands + ' index finger at the camera. The ring follows it.' },
+      { n: 2, title: 'Pinch to click', text: 'Touch thumb and index finger together, then release.' },
+      { n: 3, title: 'Keep your hand in frame', text: 'Stay inside the camera view with good light.' }
+    ];
+    const guideSign = [
+      { n: 1, title: both ? 'Show a letter with one or both hands' : 'Show one letter', text: both ? 'Some letters need two hands. Keep both inside the dashed box.' : 'Hold your hand steady inside the dashed box.' },
+      { n: 2, title: 'Wait for the letter', text: 'It is added to your sentence when it stays stable.' },
+      { n: 3, title: 'Add a space', text: 'Press Add space between words so they stay separate.' }
+    ];
+    const handDefs = [
+      { id: 'left', label: 'Left', hint: 'One hand' },
+      { id: 'right', label: 'Right', hint: 'One hand' },
+      { id: 'both', label: 'Both', hint: 'Two hands' }
+    ];
+    const handOptions = handDefs.map((h) => ({
+      label: h.label, hint: h.hint, pressed: h.id === hands,
+      border: h.id === hands ? accent : '#263150',
+      bg: h.id === hands ? '#1A2238' : '#0A0E1A',
+      pick: () => this.setState({ hands: h.id })
+    }));
+    const h1t = both ? 'translateX(22%) scale(0.8)' : (hands === 'left' ? 'scaleX(-1)' : 'none');
+    const h2t = 'translateX(-22%) scale(-0.8, 0.8)';
+    const h2o = (both && !isMask) ? 1 : 0;
+    const ringLeft = both ? '68.8%' : (hands === 'left' ? '54%' : '46%');
+    const ringTop = both ? '39.4%' : '36.7%';
+    const signLeft = both ? '8%' : '30%';
+    const signWidth = both ? '84%' : '38%';
+    const handsLabel = isMask ? (masksOn ? 'Masks on' : 'Masks off') : (both ? 'Both hands' : (hands === 'left' ? 'Left hand' : 'Right hand'));
+    const maskOptions = [0, 1, 2, 3].map((n) => ({
+      label: 'Mask ' + (n + 1), pressed: n === maskIdx,
+      border: n === maskIdx ? accent : '#263150',
+      bg: n === maskIdx ? '#1A2238' : '#0A0E1A',
+      pick: () => this.setState({ maskIdx: n, masksOn: true })
+    }));
+    const guideMask = [
+      { n: 1, title: 'Turn masks on', text: 'Use the switch. Anyone who steps into view gets a mask.' },
+      { n: 2, title: 'Pick a mask', text: 'Tap a mask to change it. The change shows right away.' },
+      { n: 3, title: 'Move freely', text: 'The mask follows your face when you move or tilt your head.' }
+    ];
+
+    const wordList = text.split(' ').filter(Boolean).map((w) => ({ text: w }));
+    const wc = wordList.length;
+
+    const seq = 'GESTURE';
+    return {
+      accent, accentInk, themes, smoothOptions, handOptions, h1t, h2t, h1o: isMask ? 0 : 1, h2o, ringLeft, ringTop, signLeft, signWidth, handsLabel,
+      chipAOp: isMask ? 0 : 1, chipALeft: both ? '72%' : '50%', chipBLeft: '28%',
+      chipAText: both ? 'Right hand' : handsLabel, chipBText: 'Left hand',
+      isMouse, isSign, help, showPanel: !full,
+      mouseBg: isMouse ? accent : 'transparent',
+      mouseFg: isMouse ? accentInk : '#EEF2FF',
+      signBg: isSign ? accent : 'transparent',
+      signFg: isSign ? accentInk : '#EEF2FF',
+      fullLabel: full ? 'Exit full screen' : 'Full screen',
+      guideTitle: isMouse ? 'Mouse mode: how to use' : (isSign ? 'Sign language: how to use' : 'Face masks: how to use'),
+      guide: isMouse ? guideMouse : (isSign ? guideSign : guideMask),
+      words: wordList,
+      wordCount: wc + (wc === 1 ? ' word' : ' words'),
+      isMask, showHands: !isMask, masksOn, maskOptions,
+      maskBg: isMask ? accent : 'transparent',
+      maskFg: isMask ? accentInk : '#EEF2FF',
+      maskLabel: 'Mask ' + (maskIdx + 1),
+      maskState: masksOn ? 'On: masks are shown' : 'Off: no masks shown',
+      switchBg: masksOn ? accent : '#3A4A75',
+      knobLeft: masksOn ? '37px' : '5px',
+      toggleMasks: () => this.setState({ masksOn: !masksOn }),
+      pickMask: () => this.setState({ mode: 'mask' }),
+      pickMouse: () => this.setState({ mode: 'mouse' }),
+      pickSign: () => this.setState({ mode: 'sign' }),
+      toggleHelp: () => this.setState({ help: !help }),
+      toggleFull: () => this.setState({ full: !full }),
+      addSpace: () => { if (text.length > 0 && !text.endsWith(' ')) this.setState({ text: text + ' ' }); },
+      backspace: () => this.setState({ text: text.slice(0, -1) }),
+      clearAll: () => this.setState({ text: '' }),
+      demoLetter: () => this.setState({ text: text + seq[idx % seq.length], letterIdx: idx + 1 })
+    };
+  }
+}
+</script>
+</body>
+</html>
