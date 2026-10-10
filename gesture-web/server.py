@@ -1,11 +1,3 @@
-"""Web UI backend for Gesture Control.
-
-Run:  pip install flask opencv-python mediapipe numpy
-      python server.py        ->  open http://localhost:5000
-
-The UI (ui/) talks to this file. Plug your EXISTING gesture code into the three
-hook functions marked HOOK below. Everything else already works.
-"""
 import os, threading, time
 import cv2
 import numpy as np

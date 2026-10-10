@@ -1,0 +1,159 @@
+[
+  {
+    "letter": "A",
+    "how": "Make a fist with all fingers curled in. Keep your thumb resting against your index finger.",
+    "moves": false,
+    "supported": true
+  },
+  {
+    "letter": "B",
+    "how": "Open your hand flat with all five fingers — including your thumb — spread out and pointing up. Face your palm towards the camera.",
+    "moves": false,
+    "supported": true,
+    "appNote": "The app reads B as a fully open hand with all five fingers extended, including the thumb."
+  },
+  {
+    "letter": "C",
+    "how": "Curve your fingers and thumb into the shape of the letter C.",
+    "moves": false,
+    "supported": false
+  },
+  {
+    "letter": "D",
+    "how": "Point your index finger straight up. Curl your middle, ring and little fingers, and touch their tips to your thumb to make a round shape. Only the index finger is extended.",
+    "moves": false,
+    "supported": true
+  },
+  {
+    "letter": "E",
+    "how": "Bend all your fingers down so the tips touch your thumb, which is tucked underneath.",
+    "moves": false,
+    "supported": false
+  },
+  {
+    "letter": "F",
+    "how": "Touch your thumb and index finger together to make a circle. Keep the other three fingers straight up.",
+    "moves": false,
+    "supported": true
+  },
+  {
+    "letter": "G",
+    "how": "Point your index finger and thumb sideways, side by side. Curl the other fingers.",
+    "moves": false,
+    "supported": false
+  },
+  {
+    "letter": "H",
+    "how": "Hold your index and middle fingers together, pointing sideways. Curl the other fingers.",
+    "moves": false,
+    "supported": false
+  },
+  {
+    "letter": "I",
+    "how": "Make a fist and raise only your little finger straight up. Keep all other fingers curled.",
+    "moves": false,
+    "supported": true
+  },
+  {
+    "letter": "J",
+    "how": "Start with the I sign (little finger up), then draw a J in the air with your little finger.",
+    "moves": true,
+    "supported": true
+  },
+  {
+    "letter": "K",
+    "how": "Raise your index and middle fingers in a V. Place your thumb on the base of the middle finger.",
+    "moves": false,
+    "supported": false
+  },
+  {
+    "letter": "L",
+    "how": "Stretch out your thumb and index finger to make an L shape. Curl your middle, ring and little fingers.",
+    "moves": false,
+    "supported": true
+  },
+  {
+    "letter": "M",
+    "how": "Fold your index, middle and ring fingers over your thumb, which is tucked underneath.",
+    "moves": false,
+    "supported": false
+  },
+  {
+    "letter": "N",
+    "how": "Fold your index and middle fingers over your thumb, which is tucked underneath.",
+    "moves": false,
+    "supported": false
+  },
+  {
+    "letter": "O",
+    "how": "Curve all your fingers so the tips touch your thumb, making the shape of an O.",
+    "moves": false,
+    "supported": false
+  },
+  {
+    "letter": "P",
+    "how": "Make the K sign, then point your hand downward.",
+    "moves": false,
+    "supported": false
+  },
+  {
+    "letter": "Q",
+    "how": "Make the G sign, then point your hand downward.",
+    "moves": false,
+    "supported": false
+  },
+  {
+    "letter": "R",
+    "how": "Cross your middle finger over your index finger. Curl the other fingers.",
+    "moves": false,
+    "supported": false
+  },
+  {
+    "letter": "S",
+    "how": "Make a fist with your thumb folded across the front of your fingers.",
+    "moves": false,
+    "supported": false
+  },
+  {
+    "letter": "T",
+    "how": "Make a fist and tuck your thumb between your index and middle fingers.",
+    "moves": false,
+    "supported": false
+  },
+  {
+    "letter": "U",
+    "how": "Raise your index and middle fingers straight up, held together. Curl the other fingers.",
+    "moves": false,
+    "supported": false
+  },
+  {
+    "letter": "V",
+    "how": "Raise your index and middle fingers apart in a V shape (peace sign). Keep your ring, little finger and thumb curled down.",
+    "moves": false,
+    "supported": true
+  },
+  {
+    "letter": "W",
+    "how": "Raise your index, middle and ring fingers apart into a W shape. Keep your thumb holding down your little finger.",
+    "moves": false,
+    "supported": true
+  },
+  {
+    "letter": "X",
+    "how": "Make a fist and bend your index finger into a hook.",
+    "moves": false,
+    "supported": false
+  },
+  {
+    "letter": "Y",
+    "how": "Stretch out your thumb and little finger. Curl your index, middle and ring fingers down.",
+    "moves": false,
+    "supported": true
+  },
+  {
+    "letter": "Z",
+    "how": "Point your index finger and draw a Z in the air.",
+    "moves": true,
+    "supported": true
+  }
+]

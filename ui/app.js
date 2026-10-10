@@ -9,16 +9,17 @@
     { id: 'violet', label: 'Violet', color: '#A78BFA' },
     { id: 'rose', label: 'Rose', color: '#FB7185' }
   ];
-  const MODES = ['mouse', 'sign', 'mask'];
+  const MODES = ['mouse', 'sign', 'air', 'mask'];
+  const PEN_COLORS = ['#FFFFFF', '#2DD4BF', '#FBBF24', '#FB7185', '#3B82F6', '#10B981', '#A855F7', '#EF4444'];
 
   // ---------- state ----------
-  const defaults = { mode: 'mouse', hands: 'right', smoothing: 'balanced', masksOn: true, maskIndex: 0, theme: 'teal', help: true };
+  const defaults = { mode: 'mouse', hands: 'right', smoothing: 'balanced', masksOn: true, maskIndex: 0, theme: 'teal', help: true, airColor: 1, airSize: 'medium' };
   const state = Object.assign({}, defaults, load());
   let text = '';
   let masks = [];
   let backendUp = false;
   let pollTimer = null;
-  let camOn = true;
+  let camOn = false;
 
   function load() { try { return JSON.parse(localStorage.getItem('gc-state') || '{}'); } catch { return {}; } }
   function save() { try { localStorage.setItem('gc-state', JSON.stringify(state)); } catch { /* ignore */ } }
@@ -31,13 +32,15 @@
   // ---------- routing ----------
   function route() {
     const h = location.hash || '#home';
-    if (h.startsWith('#app')) {
+    if (h.startsWith('#app') || h === '#guide') {
       const m = h.split('/')[1];
       if (MODES.includes(m)) state.mode = m;
+      if (h === '#guide') state.mode = 'sign';
       show('app');
       if (camOn) startFeed(); else stopFeed();
       api('/api/camera', { on: camOn }).catch(() => {});
       render(); pushState(); startPolling();
+      if (h === '#guide') openGuide();
     } else {
       show('home'); stopFeed(); stopPolling();
       api('/api/camera', { on: false }).catch(() => {});   // release the webcam light on the home page
@@ -85,7 +88,21 @@
     $('#boxHands').classList.toggle('hidden', state.mode === 'mask');
     $('#boxMouse').classList.toggle('hidden', state.mode !== 'mouse');
     $('#boxSign').classList.toggle('hidden', state.mode !== 'sign');
+    $('#boxAir').classList.toggle('hidden', state.mode !== 'air');
     $('#boxMask').classList.toggle('hidden', state.mode !== 'mask');
+    $$('#penColors button').forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.i) === state.airColor)));
+    const eraserBtn = $('#eraserBtn');
+    if (eraserBtn) {
+        eraserBtn.setAttribute('aria-pressed', String(state.airColor === 8));
+        if (state.airColor === 8) {
+            eraserBtn.classList.add('primary');
+            eraserBtn.classList.remove('ghost');
+        } else {
+            eraserBtn.classList.remove('primary');
+            eraserBtn.classList.add('ghost');
+        }
+    }
+    $$('#sizeSeg button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.size === state.airSize)));
     $('#barSpace').hidden = state.mode !== 'sign';
 
     const handsLabel = state.hands === 'both' ? 'Both hands' : state.hands === 'left' ? 'Left hand' : 'Right hand';
@@ -109,6 +126,10 @@
         [both ? 'Show a letter with one or both hands' : 'Show one letter', both ? 'Some letters need two hands. Keep both inside the camera view.' : 'Hold your hand steady in front of the camera.'],
         ['Wait for the letter', 'It is added to your sentence when it stays stable.'],
         ['Add a space', 'Press Add space between words so they stay separate.']]],
+      air: ['Air writing: how to use', [
+        ['Point to write', 'Raise only your index finger. Move it to draw on the camera.'],
+        ['Fist to erase', 'Make a fist to rub out. Hold it for 1.5 seconds to clear everything.'],
+        ['Any other pose lifts the pen', 'Open your hand to move without drawing.']]],
       mask: ['Face masks: how to use', [
         ['Turn masks on', 'Use the switch. Anyone who steps into view gets a mask.'],
         ['Pick a mask', 'Tap a mask to change it. The change shows right away.'],
@@ -159,6 +180,101 @@
   }
   function stopPolling() { if (pollTimer) clearInterval(pollTimer); pollTimer = null; }
 
+  // ---------- sign guide ----------
+  let signs = [];
+  function renderSigns(filter) {
+    signs.forEach((s) => { if (taught.includes(s.letter)) s.supported = true; });
+    const grid = $('#signGrid'); grid.textContent = '';
+    const q = (filter || '').trim().toLowerCase();
+    const list = signs.filter((s) => !q || s.letter.toLowerCase().includes(q) || s.how.toLowerCase().includes(q));
+    if (!list.length) {
+      const e = document.createElement('div'); e.className = 'empty';
+      e.textContent = signs.length ? 'No match. Try another letter.' : 'The sign list could not be loaded.';
+      grid.appendChild(e); return;
+    }
+    list.forEach((s) => {
+      const card = document.createElement('div');
+      card.className = 'sign' + (s.supported === false ? ' unsupported' : '');
+      const l = document.createElement('div'); l.className = 'sign-letter'; l.textContent = s.letter;
+      const p = document.createElement('p'); p.textContent = s.how;
+      card.append(l, p);
+      if (s.moves) { const b = document.createElement('span'); b.className = 'badge'; b.textContent = 'Moves'; card.appendChild(b); }
+      if (s.supported === false) { const n = document.createElement('span'); n.className = 'not-yet'; n.textContent = 'Not yet recognised by this app.'; card.appendChild(n); }
+      grid.appendChild(card);
+    });
+  }
+  function openGuide() { const d = $('#guide'); if (d && !d.open) d.showModal(); }
+  function closeGuide() { const d = $('#guide'); if (d && d.open) d.close(); if (location.hash === '#guide') history.replaceState(null, '', '#app/sign'); }
+  function wireGuide() {
+    fetch('signs.json').then((r) => r.json()).then((d) => { signs = d; renderSigns(''); }).catch(() => renderSigns(''));
+    $('#guideBtn').addEventListener('click', openGuide);
+    $('#guideBtn2').addEventListener('click', openGuide);
+    $('#guideClose').addEventListener('click', closeGuide);
+    $('#guide').addEventListener('click', (e) => { if (e.target === $('#guide')) closeGuide(); });
+    $('#guide').addEventListener('close', () => { if (location.hash === '#guide') history.replaceState(null, '', '#app/sign'); });
+    $('#guideSearch').addEventListener('input', (e) => renderSigns(e.target.value));
+    $$('.guide-tabs button').forEach((b) => b.addEventListener('click', () => {
+      $$('.guide-tabs button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      $('#tabLetters').hidden = b.dataset.tab !== 'letters';
+      $('#tabControls').hidden = b.dataset.tab !== 'controls';
+      $('#tabTips').hidden = b.dataset.tab !== 'tips';
+    }));
+  }
+
+  // ---------- teach signs ----------
+  let teachTimer = null;
+  let taught = [];
+  function renderTeach(st) {
+    const box = $('#teachChips'); box.textContent = '';
+    const names = Object.keys(st.labels);
+    if (!names.length) { const e = document.createElement('span'); e.className = 'muted'; e.textContent = 'Nothing yet. Record your first sign above.'; box.appendChild(e); }
+    names.forEach((l) => {
+      const chip = document.createElement('span'); chip.className = 'tchip';
+      chip.append(l + ' ');
+      const n = document.createElement('small'); n.textContent = st.labels[l]; chip.appendChild(n);
+      const x = document.createElement('button'); x.textContent = '\u00D7'; x.setAttribute('aria-label', 'Delete ' + l);
+      x.addEventListener('click', () => api('/api/teach/delete', { label: l }).then(pollTeach).catch(() => {}));
+      chip.appendChild(x); box.appendChild(chip);
+    });
+    const rec = st.recording;
+    $('#teachBarWrap').hidden = !rec;
+    $('#teachBar').style.width = Math.round((st.count / st.target) * 100) + '%';
+    $('#teachRecord').disabled = !!rec;
+    $('#teachStop').hidden = !rec;
+    $('#teachMsg').textContent = rec ? 'Recording ' + rec + ': ' + st.count + ' of ' + st.target + '. Hold the sign and move a little. Samples only count while your hand is in view.' : '';
+    let r = st.trained ? 'Trained on ' + st.samples + ' samples for ' + st.classes.length + ' signs.' : 'Not trained yet.';
+    if (st.trained) r += st.accuracy != null ? ' Check on recordings it had not seen: ' + Math.round(st.accuracy * 100) + '% right.' : ' Record each sign 3 times to get an accuracy check.';
+    if ($('#teachResult').dataset.keep !== '1') $('#teachResult').textContent = r;
+    taught = st.classes || [];
+    if (typeof renderSigns === 'function') renderSigns($('#guideSearch') ? $('#guideSearch').value : '');
+  }
+  function pollTeach() { return api('/api/teach/status').then(renderTeach).catch(() => {}); }
+  function openTeach() {
+    state.mode = 'sign'; render(); pushState();
+    pollTeach(); clearInterval(teachTimer); teachTimer = setInterval(pollTeach, 500);
+    $('#teach').showModal();
+  }
+  function closeTeach() { clearInterval(teachTimer); const d = $('#teach'); if (d.open) d.close(); }
+  function wireTeach() {
+    $('#teachLetters').append(...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map((ch) => { const o = document.createElement('option'); o.value = ch; return o; }));
+    $('#teachBtn').addEventListener('click', openTeach);
+    $('#teachClose').addEventListener('click', closeTeach);
+    $('#teach').addEventListener('close', () => clearInterval(teachTimer));
+    $('#teachRecord').addEventListener('click', () => {
+      const label = $('#teachLabel').value.trim();
+      if (!label) { $('#teachMsg').textContent = 'Type a letter or a word first.'; return; }
+      $('#teachResult').dataset.keep = '0';
+      api('/api/teach/record', { label }).then(pollTeach).catch(() => { $('#teachMsg').textContent = 'Could not start recording. Is the server running?'; });
+    });
+    $('#teachStop').addEventListener('click', () => api('/api/teach/stop', {}).then(pollTeach).catch(() => {}));
+    $('#teachTrain').addEventListener('click', () => {
+      const b = $('#teachTrain'); b.disabled = true; $('#teachResult').dataset.keep = '1'; $('#teachResult').textContent = 'Training...';
+      api('/api/teach/train', {}).then((r) => { $('#teachResult').dataset.keep = '0'; if (!r.ok) { $('#teachResult').dataset.keep = '1'; $('#teachResult').textContent = r.message; } return pollTeach(); })
+        .catch(() => { $('#teachResult').textContent = 'Training failed. Check the server console.'; })
+        .finally(() => { b.disabled = false; });
+    });
+  }
+
   // ---------- wiring ----------
   function wire() {
     $('#swatches').append(...THEMES.map((t) => {
@@ -176,6 +292,17 @@
     $('#barSpace').addEventListener('click', () => signAction('space'));
     $('#backBtn').addEventListener('click', () => signAction('backspace'));
     $('#clearBtn').addEventListener('click', () => signAction('clear'));
+
+    // Air writing controls
+    $('#penColors').append(...PEN_COLORS.map((c, i) => {
+      const b = document.createElement('button'); b.dataset.i = i; b.setAttribute('aria-label', 'Pen colour ' + (i + 1));
+      b.innerHTML = `<span style="background:${c}"></span>`;
+      b.addEventListener('click', () => { state.airColor = i; render(); pushState(); });
+      return b;
+    }));
+    $('#eraserBtn').addEventListener('click', () => { state.airColor = 8; render(); pushState(); });
+    $$('#sizeSeg button').forEach((b) => b.addEventListener('click', () => { state.airSize = b.dataset.size; render(); pushState(); }));
+    $('#airClear').addEventListener('click', () => { api('/api/air/clear', {}).catch(() => {}); });
 
     const stage = $('#stage');
     const toggleFs = () => { if (document.fullscreenElement) document.exitFullscreen(); else if (stage.requestFullscreen) stage.requestFullscreen(); };
@@ -212,6 +339,8 @@
   }
 
   wire();
+  wireGuide();
+  wireTeach();
   doodleDemo();
   document.body.dataset.theme = state.theme;
   route();

@@ -1,39 +1,40 @@
-# Gesture Control: new web UI
+# Gesture Control Suite
 
-Plain HTML/CSS/JS (no framework, no support.js). Works in any browser.
+Gesture Control Suite is a modern, web-browser-based intelligent application that translates real-time hand movements into powerful interactions. Driven by Python, Flask, and MediaPipe hand tracking, this suite fully replaces standard peripherals and creates new paradigms for accessibility.
 
-## Run
-```
+**Key Features:**
+
+* **Virtual Mouse Control:** Seamlessly drive your system cursor purely through hand motion. Perform left/right clicks, dragging, and scrolling organically via gestures. Smooth predictive logic ensures jitter-free pointing.
+* **Air Writing Canvas:** Turn empty air into your personal whiteboard. Index finger draws; make a fist to erase specific sections locally; hold the fist for 1.5 seconds to wipe the entire board. Supports dynamic colors, customizable brush thickness, fully independent two-handed simultaneous drawing, and saving composited screenshots directly to your device.
+* **Sign Language Recognition:** Decode static shapes (A, B, D, F, I, L, V, W, Y) and dynamic motion strokes (J and Z) natively. An onboard `RandomForestClassifier` system allows anyone to "Teach" the system personalized signs or whole words directly from the UI within a handful of seconds, saving them to your custom dictionary `signs_dataset.json`.
+* **Face Masks:** Live dynamic augmented-reality masks utilizing highly optimized FaceMesh pipelines overlaid on the webcam feed.
+
+## Technology Stack
+
+* **Backend Engine:** Flask (Python) with a robust multi-threaded server routing scheme bridging browser interactions to OS controls.
+* **Computer Vision:** MediaPipe's lightweight, rapid inference engine for 21-point hand tracking execution, driven by `cv2` (OpenCV).
+* **Machine Learning:** `scikit-learn` drives the personalized one-shot "Teach Sign" architecture securely via locally hosted Random Forests.
+* **Automation:** `pyautogui` connects python predictions into hard-OS level macro interactions and mouse events.
+* **Frontend:** Minimal, crisp Vanilla CSS and JS designed for highly-responsive feedback and beautiful UI/UX that requires zero complex front-end installations.
+
+## Quick Start
+1. Ensure your camera is accessible and functional.
+2. Clone the repository and navigate clearly into the directory.
+3. Install the engine dependencies into your working Python environment:
+```bash
 pip install -r requirements.txt
+```
+4. Start the backend local routing daemon:
+```bash
 python server.py
 ```
-Open http://localhost:5000
+5. Navigate directly to the provided local domain inside any modern browser (default: `http://127.0.0.1:5000`) and grant webcam permissions to dive in!
 
-## Files
-- `ui/` the new UI (home page + app screen): `index.html`, `styles.css`, `app.js`
-- `server.py` serves the UI, streams the camera (`/video_feed`) and exposes a small API
-- `face_masks.py` face masks that track every face (put transparent PNGs in `masks/`)
+## Architecture
 
-## Connect your existing code (2 hooks in server.py)
-1. `handle_mouse(frame, hands, smoothing)` call your mouse-control code. `hands` is left/right/both. Use `smooth()` with `SMOOTH_ALPHA[smoothing]` for a smooth cursor.
-2. `handle_sign(frame, hands)` call your sign recogniser. Call `add_letter('A')` when a letter is stable and `note_hand_seen(True/False)` each frame. Lowering the hand for 1.5 s adds one space automatically. The Add space button also works.
-
-## API used by the UI
-- `GET /video_feed` MJPEG camera stream
-- `POST /api/state` {mode, hands, smoothing, masksOn, maskIndex}
-- `GET /api/sign` -> {text}; `POST /api/sign/action` {action: space|backspace|clear}
-- `GET /api/masks` -> list of PNGs found in `masks/`
-
-## Face masks
-- Masks are the images in `masks/` (PNG, WebP or JPG). Transparent PNGs look best. Included: cat_hat, cat_silly, cat_sunglasses.
-- Masks are shown as the full picture (no cut-out). `masks/masks.json` says where the face sits in each picture (centre x/y and face width as fractions). New images without an entry are treated as one big face; add an entry to fine-tune.
-- To add more, drop images in `masks/` and restart. They show up in the mask picker automatically.
-- Each face on camera gets a mask that follows it (position, size and head tilt). Up to 4 faces.
-- New MediaPipe versions need a small face model. It downloads once on first use (needs internet) and is saved as `face_landmarker.task`. If it can't download, get it from the URL printed in the console and put it next to `server.py`.
-
-## Folders
-- `design-reference/` the Claude Design mockups (.dc.html). They only open inside Claude Design and are not part of the app.
-
-## Notes
-- Only one program can use the webcam. Do not run the old OpenCV window (`main.py`) at the same time as `server.py`.
-- Full screen uses the browser Full Screen API (button on the camera, or F11).
+This application moved from a rigid monolithic Python GUI application into a headless web-driven architecture. 
+* **`server.py`:** Main entry orchestrator for parsing web-socket and POST actions.
+* **`hand_tracker.py`**: A modularized vision wrap that abstracts old vs new Mediapipe versions effortlessly.
+* **`sign_model.py`:** Handles real-time spatial transformations (invariant scale logic) and model predictions for signs.
+* **`air_canvas.py`:** Stateful tracking of independent 2D vectors generated from temporal fingertip tracking for multi-hand drawing.
+* **`face_masks.py`:** Simple API for mapping 3D augmented meshes over real-world faces.

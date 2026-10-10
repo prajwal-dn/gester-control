@@ -14,6 +14,8 @@ from flask import Flask, Response, jsonify, request, send_from_directory
 import face_masks
 import pyautogui
 import hand_tracker
+import air_canvas
+import sign_model
 pyautogui.FAILSAFE = False
 pyautogui.PAUSE = 0
 
@@ -21,7 +23,8 @@ BASE = os.path.dirname(os.path.abspath(__file__))
 app = Flask(__name__, static_folder=os.path.join(BASE, "ui"), static_url_path="")
 
 lock = threading.Lock()
-state = {"mode": "mouse", "hands": "right", "smoothing": "balanced", "masksOn": True, "maskIndex": 0}
+state = {"mode": "mouse", "hands": "right", "smoothing": "balanced", "masksOn": True, "maskIndex": 0, "airColor": 1, "airSize": "medium"}
+air = air_canvas.AirCanvas()
 sentence = {"text": ""}
 SMOOTH_ALPHA = {"calm": 0.15, "balanced": 0.35, "quick": 0.7}   # 0..1, higher = faster cursor
 
@@ -66,11 +69,18 @@ _last_hand_time = time.time()
 _added_since_space = False
 
 def add_letter(ch):
-    """Call when a sign letter is confirmed. Letters are appended; spaces are separate."""
+    """Add a recognised letter, or a whole word/phrase (length > 1) with spaces around it."""
     global _added_since_space
     with lock:
-        sentence["text"] += ch.upper()
-    _added_since_space = True
+        t = sentence["text"]
+        if len(ch) > 1:
+            if t and not t.endswith(" "):
+                t += " "
+            t += ch + " "
+        else:
+            t += ch.upper()
+        sentence["text"] = t
+    _added_since_space = len(ch) == 1
 
 def note_hand_seen(seen):
     """Call every frame in sign mode. Lowering the hand for 1.5 s adds ONE space."""
@@ -131,6 +141,7 @@ def handle_mouse(frame, hands, smoothing):
 RULE_SIGNS = {
     (0, 0, 0, 0, 0): "A",
     (1, 1, 1, 1, 1): "B",
+    (0, 1, 1, 1, 1): "B",
     (0, 1, 1, 0, 0): "V",
     (0, 1, 0, 0, 0): "D",
     (1, 0, 0, 0, 1): "Y",
@@ -139,6 +150,8 @@ RULE_SIGNS = {
     (1, 1, 1, 0, 0): "3",
     (1, 1, 0, 0, 0): "L",
     (0, 1, 1, 1, 0): "W",
+    (0, 0, 1, 1, 1): "F",
+    (1, 0, 0, 0, 0): "A",
 }
 
 def get_fingers(pts):
@@ -159,6 +172,64 @@ def classify_hand_sign(pts):
     f = get_fingers(pts)
     return RULE_SIGNS.get(f)
 
+_z_history = []
+_j_history = []
+
+def detect_dynamic_signs(pts, frame):
+    """Tracks index and pinky fingers to detect Z and J mid-air strokes."""
+    global _z_history, _j_history
+    h, w = frame.shape[:2]
+    f = get_fingers(pts)
+    letter = None
+
+    # Z pattern (Index Finger only)
+    if f[1] == 1 and f[2] == 0 and f[3] == 0 and f[4] == 0:
+        _z_history.append((int(pts[8][0]*w), int(pts[8][1]*h)))
+        if len(_z_history) > 30: _z_history.pop(0)
+    else:
+        _z_history.clear()
+
+    # J pattern (Pinky Finger only)
+    if f[4] == 1 and f[1] == 0 and f[2] == 0 and f[3] == 0:
+        _j_history.append((int(pts[20][0]*w), int(pts[20][1]*h)))
+        if len(_j_history) > 30: _j_history.pop(0)
+    else:
+        _j_history.clear()
+
+    # Check Z path (Right, Down-Left, Right)
+    if len(_z_history) >= 20:
+        n = len(_z_history)
+        s1, s2, s3 = _z_history[:n//3], _z_history[n//3:2*n//3], _z_history[2*n//3:]
+        dx1, dy1 = s1[-1][0] - s1[0][0], s1[-1][1] - s1[0][1]
+        dx2, dy2 = s2[-1][0] - s2[0][0], s2[-1][1] - s2[0][1]
+        dx3, dy3 = s3[-1][0] - s3[0][0], s3[-1][1] - s3[0][1]
+        t = 30
+        if dx1 > t and abs(dy1) < t * 1.5:
+            if dx2 < -t*0.6 and dy2 > t:
+                if dx3 > t and abs(dy3) < t * 1.5:
+                    letter = "Z"
+                    _z_history.clear()
+
+    # Check J path (Down, curve Up/Side)
+    if len(_j_history) >= 15:
+        nj = len(_j_history)
+        s1, s2 = _j_history[:nj//2], _j_history[nj//2:]
+        dx1, dy1 = s1[-1][0] - s1[0][0], s1[-1][1] - s1[0][1]
+        dx2, dy2 = s2[-1][0] - s2[0][0], s2[-1][1] - s2[0][1]
+        t = 25
+        if dy1 > t and abs(dx1) < t:
+            if dy2 < 0 and abs(dx2) > t:
+                letter = "J"
+                _j_history.clear()
+
+    # Draw trails
+    if len(_z_history) > 1:
+        cv2.polylines(frame, [np.array(_z_history, np.int32)], False, (255, 160, 50), 5, cv2.LINE_AA)
+    if len(_j_history) > 1:
+        cv2.polylines(frame, [np.array(_j_history, np.int32)], False, (100, 200, 255), 5, cv2.LINE_AA)
+
+    return letter
+
 _cand, _count = None, 0
 
 def confirm_letter(letter, need=12):
@@ -176,14 +247,31 @@ def handle_sign(frame, hands):
     note_hand_seen(bool(found))
     letter = None
     if found:
-        want = "right" if hands == "both" else hands
-        primary = next((h for h in found if h[0].lower() == want), found[0])
-        letter = classify_hand_sign(primary[1])
-        progress = min(12, _count)
-        txt = f"Sign: {letter} ({progress}/12)" if letter else "Sign: ..."
-        col = (80, 255, 160) if letter else (160, 180, 200)
-        cv2.putText(frame, txt, (24, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.85, col, 2, cv2.LINE_AA)
+        hand_label, pts = found[0]
+        if sign_model.rec["label"]:                   # teaching: record the sample, do not type anything
+            sign_model.add_sample(hand_label, pts)
+            cv2.putText(frame, "Recording %s  %d/%d" % (sign_model.rec["label"] or "...", sign_model.rec["count"], sign_model.TARGET),
+                        (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (191, 212, 45), 2, cv2.LINE_AA)
+        else:
+            dyn = detect_dynamic_signs(pts, frame)
+            if dyn:
+                add_letter(dyn)
+                letter = None       # added instantly, skip confirmation
+                global _cand
+                _cand = None
+            else:
+                letter, _conf = sign_model.predict(hand_label, pts)
+                if letter is None and not sign_model.status()["trained"]:
+                    letter = classify_hand_sign(pts)      # old rule-based fallback until a model is trained
     confirm_letter(letter)
+    return frame
+
+def handle_air(frame, hands, st):
+    found = hand_tracker.find_hands(frame, hands)
+    air.color, air.size = st["airColor"], st["airSize"]
+    states = air.update(frame, found)
+    frame = air.overlay(frame)
+    air.marker(frame, found, states)
     return frame
 
 def process_frame(frame, st):
@@ -192,6 +280,8 @@ def process_frame(frame, st):
         frame = handle_mouse(frame, st["hands"], st["smoothing"])
     elif st["mode"] == "sign":
         frame = handle_sign(frame, st["hands"])
+    elif st["mode"] == "air":
+        frame = handle_air(frame, st["hands"], st)
     elif st["mode"] == "mask" and st["masksOn"]:
         frame = face_masks.apply_masks(frame, st["maskIndex"])      # already done for you
     return frame
@@ -236,11 +326,13 @@ def api_state():
     if request.method == "POST":
         data = request.get_json(silent=True) or {}
         with lock:
-            if data.get("mode") in ("mouse", "sign", "mask"): state["mode"] = data["mode"]
+            if data.get("mode") in ("mouse", "sign", "air", "mask"): state["mode"] = data["mode"]
             if data.get("hands") in ("left", "right", "both"): state["hands"] = data["hands"]
             if data.get("smoothing") in SMOOTH_ALPHA: state["smoothing"] = data["smoothing"]
             if isinstance(data.get("masksOn"), bool): state["masksOn"] = data["masksOn"]
             if isinstance(data.get("maskIndex"), int) and data["maskIndex"] >= 0: state["maskIndex"] = data["maskIndex"]
+            if isinstance(data.get("airColor"), int) and 0 <= data["airColor"] < len(air_canvas.COLORS): state["airColor"] = data["airColor"]
+            if data.get("airSize") in air_canvas.SIZES: state["airSize"] = data["airSize"]
     with lock:
         return jsonify(state)
 
@@ -254,6 +346,33 @@ def api_camera():
             if not camera_on:
                 release_camera()
     return jsonify({"on": camera_on})
+
+@app.route("/api/teach/status")
+def api_teach_status():
+    return jsonify(sign_model.status())
+
+@app.route("/api/teach/record", methods=["POST"])
+def api_teach_record():
+    label = (request.get_json(silent=True) or {}).get("label", "")
+    if not sign_model.start_recording(label):
+        return jsonify({"ok": False, "message": "Type a letter or a word first."}), 400
+    with lock:
+        state["mode"] = "sign"                        # frames are only recorded in Sign language mode
+    return jsonify({"ok": True})
+
+@app.route("/api/teach/stop", methods=["POST"])
+def api_teach_stop():
+    sign_model.stop_recording()
+    return jsonify({"ok": True})
+
+@app.route("/api/teach/train", methods=["POST"])
+def api_teach_train():
+    return jsonify(sign_model.train())
+
+@app.route("/api/teach/delete", methods=["POST"])
+def api_teach_delete():
+    sign_model.delete_label((request.get_json(silent=True) or {}).get("label", ""))
+    return jsonify({"ok": True})
 
 @app.route("/api/sign")
 def api_sign():
@@ -270,6 +389,16 @@ def api_sign_action():
         elif action == "clear": t = ""
         sentence["text"] = t
         return jsonify(sentence)
+
+@app.route("/api/air/clear", methods=["POST"])
+def api_air_clear():
+    air.clear()
+    return jsonify({"ok": True})
+
+@app.route("/api/air/image")
+def api_air_image():
+    return Response(air.drawing_png(), mimetype="image/png",
+                    headers={"Content-Disposition": "attachment; filename=air-writing.png"})
 
 @app.route("/api/masks")
 def api_masks():

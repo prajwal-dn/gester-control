@@ -70,8 +70,15 @@
     <div class="grid3">
       <a class="card link" href="#app/mouse"><h3>Mouse</h3><p>Point to move the cursor, pinch to click. Choose Calm, Balanced or Quick smoothing so the pointer feels steady.</p><span class="accent strong">Open Mouse mode</span></a>
       <a class="card link" href="#app/sign"><h3>Sign language</h3><p>Show a letter and it is added to your sentence. A big Add space button keeps every word separate.</p><span class="accent strong">Open Sign language mode</span></a>
+      <a class="card link" href="#app/air"><h3>Air writing</h3><p>Point with one finger and write in the air. Your drawing shows on the camera. Make a fist to erase.</p><span class="accent strong">Open Air writing</span></a>
       <a class="card link" href="#app/mask"><h3>Face masks</h3><p>Switch masks on, pick one, and everyone in view gets a mask that follows their face as they move.</p><span class="accent strong">Open Face masks</span></a>
     </div>
+  </section>
+
+  <section id="signs" class="wrap section">
+    <h2>Learn the signs.</h2>
+    <p class="lead">Not sure how to sign a letter? The sign guide shows every letter, how to make it, and how to add spaces between words.</p>
+    <div><a class="btn primary big" href="#guide">Open the sign guide</a></div>
   </section>
 
   <section class="wrap section">
@@ -87,12 +94,14 @@
     <nav class="modes" aria-label="Mode">
       <button data-mode="mouse" aria-pressed="true"><b>Mouse</b><small>Move &amp; click</small></button>
       <button data-mode="sign" aria-pressed="false"><b>Sign language</b><small>Letters to text</small></button>
+      <button data-mode="air" aria-pressed="false"><b>Air writing</b><small>Draw with finger</small></button>
       <button data-mode="mask" aria-pressed="false"><b>Face masks</b><small>Pick &amp; wear</small></button>
     </nav>
 
     <div class="tools">
       <span class="muted">Colour</span>
       <div id="swatches" class="swatches"></div>
+      <button id="guideBtn" class="btn ghost">Sign guide</button>
       <button id="helpBtn" class="btn ghost" aria-pressed="true">How to use</button>
     </div>
   </header>
@@ -113,6 +122,7 @@
       <div class="stage-bar" id="stageBar">
         <button data-mode="mouse">Mouse</button>
         <button data-mode="sign">Sign</button>
+        <button data-mode="air">Air</button>
         <button data-mode="mask">Masks</button>
         <button id="barSpace" class="primary" hidden>Add space</button>
         <button id="barCam">Camera off</button>
@@ -148,7 +158,25 @@
           <button id="backBtn" class="btn ghost flex1">Backspace</button>
           <button id="clearBtn" class="btn ghost flex1">Clear</button>
         </div>
+        <button id="guideBtn2" class="btn ghost full">Open sign guide</button>
+        <button id="teachBtn" class="btn primary full">Teach signs</button>
         <p class="muted small">Words stay separate. Press Add space, or lower your hand briefly, to start the next word.</p>
+      </div>
+
+      <div class="box" id="boxAir">
+        <h3>Air writing</h3>
+        <h4>Pen colour</h4>
+        <div id="penColors" class="swatches"></div>
+        <button id="eraserBtn" class="btn ghost full" style="margin-top: 8px;">Eraser</button>
+        <h4>Brush size</h4>
+        <div class="seg" id="sizeSeg">
+          <button data-size="thin"><b>Thin</b></button>
+          <button data-size="medium"><b>Medium</b></button>
+          <button data-size="thick"><b>Thick</b></button>
+        </div>
+        <button id="airClear" class="btn ghost full">Clear drawing</button>
+        <a id="airSave" class="btn ghost full" href="/api/air/image" download="air-writing.png">Save picture</a>
+        <p class="muted small">Point with only your index finger to write. Make a fist to erase. Hold the fist for 1.5 seconds to clear everything.</p>
       </div>
 
       <div class="box" id="boxMask">
@@ -163,6 +191,56 @@
     </aside>
   </main>
 </div>
+
+<dialog id="guide" class="guide" aria-labelledby="guideTitle">
+  <div class="guide-head">
+    <h2 id="guideTitle">Sign language guide</h2>
+    <button id="guideClose" class="btn ghost" aria-label="Close guide">Close</button>
+  </div>
+  <p class="muted">The fingerspelling alphabet. Make each hand shape in front of the camera and hold it steady until the letter appears.</p>
+  <div class="guide-tabs">
+    <button data-tab="letters" aria-pressed="true">Letters A to Z</button>
+    <button data-tab="controls" aria-pressed="false">Spaces &amp; editing</button>
+    <button data-tab="tips" aria-pressed="false">Tips</button>
+  </div>
+  <div id="tabLetters">
+    <input id="guideSearch" class="search" type="search" placeholder="Find a letter" aria-label="Find a letter">
+    <div id="signGrid" class="sign-grid"></div>
+  </div>
+  <div id="tabControls" class="sign-grid" hidden>
+    <div class="sign"><div class="sign-letter">Space</div><p>Press Add space, or lower your hand for a moment after a letter. The next letter starts a new word.</p></div>
+    <div class="sign"><div class="sign-letter">Back</div><p>Backspace removes the last letter or space.</p></div>
+    <div class="sign"><div class="sign-letter">Clear</div><p>Clear removes the whole sentence so you can start again.</p></div>
+  </div>
+  <div id="tabTips" class="sign-grid" hidden>
+    <div class="sign"><div class="sign-letter">1</div><p>Hold each sign steady for a moment. The letter is added only when the shape stays the same.</p></div>
+    <div class="sign"><div class="sign-letter">2</div><p>Use good light and keep your whole hand inside the camera view.</p></div>
+    <div class="sign"><div class="sign-letter">3</div><p>Keep your hand about an arm's length from the camera, with the back of the hand clear of other objects.</p></div>
+    <div class="sign"><div class="sign-letter">4</div><p>J and Z need a small movement. Draw the letter in the air slowly.</p></div>
+  </div>
+</dialog>
+
+<dialog id="teach" class="guide" aria-labelledby="teachTitle">
+  <div class="guide-head">
+    <h2 id="teachTitle">Teach the app a sign</h2>
+    <button id="teachClose" class="btn ghost" aria-label="Close">Close</button>
+  </div>
+  <p class="muted">Choose Left or Right hand first. Type a letter or a word, hold the sign in front of the camera and press Record. Move your hand a little while it records. Record each sign 3 times, then press Train.</p>
+  <div class="teach-row">
+    <input id="teachLabel" class="search" list="teachLetters" placeholder="Letter or word, e.g. A or HELLO" maxlength="20" aria-label="Letter or word to teach">
+    <datalist id="teachLetters"></datalist>
+    <button id="teachRecord" class="btn primary big">Record</button>
+    <button id="teachStop" class="btn ghost" hidden>Stop</button>
+  </div>
+  <div class="progress" id="teachBarWrap" hidden><div id="teachBar"></div></div>
+  <p id="teachMsg" class="muted" role="status"></p>
+  <h3>Signs taught</h3>
+  <div id="teachChips" class="taught"></div>
+  <div class="teach-row">
+    <button id="teachTrain" class="btn primary big">Train</button>
+  </div>
+  <p id="teachResult" class="muted" role="status"></p>
+</dialog>
 
 <script src="app.js"></script>
 </body>
