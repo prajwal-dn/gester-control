@@ -15,14 +15,13 @@
     { id: 'violet', label: 'Violet', color: '#A78BFA' },
     { id: 'rose', label: 'Rose', color: '#FB7185' }
   ];
-  const MODES = ['mouse', 'sign', 'air', 'mask'];
+  const MODES = ['air', 'sign', 'mask'];
   const PEN_COLORS = [
     '#FFFFFF', '#2DD4BF', '#FBBF24', '#FB7185',
     '#3B82F6', '#10B981', '#A855F7', '#EF4444',
     '#000000' // Eraser
   ];
   const SIZES = { thin: 4, medium: 8, thick: 14 };
-  const SMOOTH_ALPHA = { calm: 0.15, balanced: 0.35, quick: 0.7 };
 
   // Starter vocabulary for sign classifier
   const RULE_SIGNS = {
@@ -42,9 +41,8 @@
 
   // State initialization
   const defaults = {
-    mode: 'mouse',
+    mode: 'air',
     hands: 'right',
-    smoothing: 'balanced',
     masksOn: true,
     maskIndex: 0,
     theme: 'teal',
@@ -86,16 +84,6 @@
   let prevAirTips = {};
   let fistStartTimes = {};
   let fistWaitRelease = {};
-
-  // Mouse Mode States
-  let prevCursor = null;
-  let isPinching = false;
-  let clickParticles = [];
-  let interactiveTargets = [
-    { x: 0.25, y: 0.3, r: 40, label: 'Pop Me!', color: '#2DD4BF', popped: false, popAnim: 0 },
-    { x: 0.75, y: 0.3, r: 40, label: 'Click!', color: '#FB7185', popped: false, popAnim: 0 },
-    { x: 0.5, y: 0.7, r: 50, label: 'Pinch Test', color: '#FBBF24', popped: false, popAnim: 0 }
-  ];
 
   // Sign Mode States
   let signCandidate = null;
@@ -280,8 +268,6 @@
 
   // ---------- Hand Math & Gestures ----------
   function getFingers(pts) {
-    // MediaPipe Hand Landmarks:
-    // 0: Wrist, 4: Thumb Tip, 3: Thumb IP, 5: Index MCP, 8: Index Tip, 6: Index PIP, 17: Pinky MCP
     const dist = (a, b) => Math.hypot(pts[a].x - pts[b].x, pts[a].y - pts[b].y);
 
     const d4_17 = dist(4, 17);
@@ -305,7 +291,7 @@
     const w = stageCanvas.width;
     const h = stageCanvas.height;
     return landmarks.map((pt) => ({
-      x: (1.0 - pt.x) * w, // Mirrored horizontally for natural view
+      x: (1.0 - pt.x) * w,
       y: pt.y * h,
       z: pt.z,
       rawX: pt.x,
@@ -348,8 +334,6 @@
   function onHandResults(results) {
     drawMirroredVideo();
 
-    const w = stageCanvas.width;
-    const h = stageCanvas.height;
     const foundHands = [];
 
     if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
@@ -357,11 +341,9 @@
         const rawLm = results.multiHandLandmarks[i];
         const pts = getCanvasPoints(rawLm);
 
-        // Map handedness: MediaPipe's raw label is from image view, mirrored for user
         let rawLabel = results.multiHandedness && results.multiHandedness[i] ? results.multiHandedness[i].label : (i === 0 ? 'Right' : 'Left');
-        let handLabel = rawLabel === 'Left' ? 'right' : 'left'; // Mirrored display perspective
+        let handLabel = rawLabel === 'Left' ? 'right' : 'left';
 
-        // Filter by user preference (Left, Right, or Both)
         if (state.hands !== 'both' && handLabel !== state.hands) {
           continue;
         }
@@ -370,175 +352,14 @@
       }
     }
 
-    // Route to active mode
-    if (state.mode === 'mouse') {
-      handleMouseMode(foundHands);
-    } else if (state.mode === 'air') {
+    if (state.mode === 'air') {
       handleAirMode(foundHands);
     } else if (state.mode === 'sign') {
       handleSignMode(foundHands);
     }
   }
 
-  // ---------- Mode 1: Virtual Mouse & Interactive Playground ----------
-  function handleMouseMode(hands) {
-    const w = stageCanvas.width;
-    const h = stageCanvas.height;
-
-    // Draw interactive targets on the stage
-    drawInteractiveTargets();
-
-    if (!hands || hands.length === 0) {
-      prevCursor = null;
-      return;
-    }
-
-    // Draw skeletons
-    hands.forEach((h) => drawHandSkeleton(h.pts, 'rgba(45, 212, 191, 0.4)'));
-
-    const want = state.hands === 'both' ? 'right' : state.hands;
-    const pointerHand = hands.find((h) => h.label === want) || hands[0];
-    const clickerHand = state.hands === 'both' ? (hands.find((h) => h.label === 'left') || pointerHand) : pointerHand;
-
-    // Index fingertip (landmark 8)
-    const tip = pointerHand.pts[8];
-
-    // Smooth cursor movement
-    const alpha = SMOOTH_ALPHA[state.smoothing] || 0.35;
-    if (!prevCursor) {
-      prevCursor = { x: tip.x, y: tip.y };
-    } else {
-      prevCursor.x = prevCursor.x + alpha * (tip.x - prevCursor.x);
-      prevCursor.y = prevCursor.y + alpha * (tip.y - prevCursor.y);
-    }
-
-    // Pinch detection: thumb tip (4) and index tip (8)
-    const thumbTip = clickerHand.pts[4];
-    const indexTip = clickerHand.pts[8];
-    const wrist = clickerHand.pts[0];
-    const middleMcp = clickerHand.pts[9];
-    const handScale = Math.hypot(wrist.x - middleMcp.x, wrist.y - middleMcp.y) || 100;
-    const pinchDist = Math.hypot(thumbTip.x - indexTip.x, thumbTip.y - indexTip.y);
-    const pinched = (pinchDist / handScale) < 0.28;
-
-    // Trigger click event on pinch
-    if (pinched && !isPinching) {
-      triggerMouseClick(prevCursor.x, prevCursor.y);
-      // Spawn vibrant particles
-      for (let i = 0; i < 16; i++) {
-        clickParticles.push({
-          x: prevCursor.x,
-          y: prevCursor.y,
-          vx: (Math.random() - 0.5) * 12,
-          vy: (Math.random() - 0.5) * 12,
-          r: Math.random() * 6 + 4,
-          color: '#10B981',
-          life: 1.0
-        });
-      }
-    }
-    isPinching = pinched;
-
-    // Render cyber cursor
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(prevCursor.x, prevCursor.y, 14, 0, Math.PI * 2);
-    ctx.strokeStyle = pinched ? '#10B981' : '#2DD4BF';
-    ctx.lineWidth = 3;
-    ctx.shadowColor = pinched ? '#10B981' : '#2DD4BF';
-    ctx.shadowBlur = 12;
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.arc(prevCursor.x, prevCursor.y, pinched ? 8 : 4, 0, Math.PI * 2);
-    ctx.fillStyle = pinched ? '#10B981' : '#FFFFFF';
-    ctx.fill();
-
-    if (pinched) {
-      ctx.font = 'bold 18px Sora, sans-serif';
-      ctx.fillStyle = '#10B981';
-      ctx.fillText('CLICK!', prevCursor.x + 22, prevCursor.y - 12);
-    }
-    ctx.restore();
-
-    // Render particles
-    updateAndDrawParticles();
-  }
-
-  function triggerMouseClick(x, y) {
-    const w = stageCanvas.width;
-    const h = stageCanvas.height;
-
-    // Check interaction with target bubbles
-    interactiveTargets.forEach((t) => {
-      const tx = t.x * w;
-      const ty = t.y * h;
-      const d = Math.hypot(x - tx, y - ty);
-      if (d <= t.r + 15) {
-        t.popped = true;
-        t.popAnim = 1.0;
-      }
-    });
-  }
-
-  function drawInteractiveTargets() {
-    const w = stageCanvas.width;
-    const h = stageCanvas.height;
-
-    interactiveTargets.forEach((t) => {
-      const tx = t.x * w;
-      const ty = t.y * h;
-
-      if (t.popped) {
-        t.popAnim -= 0.05;
-        if (t.popAnim <= 0) {
-          t.popped = false;
-          t.popAnim = 0;
-        }
-      }
-
-      ctx.save();
-      const currentR = t.popped ? t.r * (1 + (1 - t.popAnim) * 0.4) : t.r;
-      ctx.beginPath();
-      ctx.arc(tx, ty, currentR, 0, Math.PI * 2);
-      ctx.fillStyle = t.popped ? 'rgba(16, 185, 129, 0.4)' : 'rgba(18, 24, 41, 0.85)';
-      ctx.strokeStyle = t.popped ? '#10B981' : t.color;
-      ctx.lineWidth = 3;
-      ctx.shadowColor = t.color;
-      ctx.shadowBlur = 10;
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.fillStyle = '#EEF2FF';
-      ctx.font = 'bold 15px Sora, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(t.popped ? 'Hit! ✓' : t.label, tx, ty);
-      ctx.restore();
-    });
-  }
-
-  function updateAndDrawParticles() {
-    for (let i = clickParticles.length - 1; i >= 0; i--) {
-      const p = clickParticles[i];
-      p.x += p.vx;
-      p.y += p.vy;
-      p.life -= 0.04;
-      if (p.life <= 0) {
-        clickParticles.splice(i, 1);
-        continue;
-      }
-      ctx.save();
-      ctx.globalAlpha = p.life;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-      ctx.fillStyle = p.color;
-      ctx.fill();
-      ctx.restore();
-    }
-  }
-
-  // ---------- Mode 2: Air Writing (Air Canvas) ----------
+  // ---------- Mode 1: Air Writing (Air Canvas) ----------
   function handleAirMode(hands) {
     const w = stageCanvas.width;
     const h = stageCanvas.height;
@@ -603,7 +424,7 @@
       delete fistStartTimes[hand.label];
       delete fistWaitRelease[hand.label];
 
-      // 2. Only index extended (f[1] === 1 and others 0) = Pen Down
+      // 2. Only index extended = Pen Down
       const isDrawing = f[1] === 1 && f[2] === 0 && f[3] === 0 && f[4] === 0;
 
       if (isDrawing) {
@@ -659,7 +480,6 @@
   }
 
   function saveAirPicture() {
-    // Composite webcam + air drawings
     const exportCanvas = document.createElement('canvas');
     exportCanvas.width = stageCanvas.width;
     exportCanvas.height = stageCanvas.height;
@@ -682,12 +502,11 @@
     link.click();
   }
 
-  // ---------- Mode 3: Sign Language Recognition & Sentence Builder ----------
+  // ---------- Mode 2: Sign Language Recognition & Sentence Builder ----------
   function handleSignMode(hands) {
     const w = stageCanvas.width;
     const h = stageCanvas.height;
 
-    // Check if hands lowered to add auto space
     const seen = hands && hands.length > 0;
     const now = Date.now();
     if (seen) {
@@ -709,21 +528,15 @@
     const pts = primaryHand.pts;
     const rawLm = primaryHand.rawLm;
 
-    // Extract normalized geometric features for ML / custom taught signs
     const feat = extractHandFeatures(primaryHand.label, rawLm);
 
-    // If recording custom signs for Teach modal
     if (teachRecording.label) {
       addTeachSample(primaryHand.label, feat);
     }
 
-    // Detect dynamic strokes (Z and J)
     const dynamicSign = detectDynamicSigns(primaryHand, w, h);
-
-    // Predict sign: custom trained ML first, then rule-based fallback
     let detected = dynamicSign || predictTaughtSign(feat) || classifyRuleSign(primaryHand.fingers);
 
-    // Confirm letter after 12 consecutive frames
     if (detected) {
       if (detected === signCandidate) {
         signCandidateCount++;
@@ -735,7 +548,6 @@
         signCandidateCount = 1;
       }
 
-      // Display letter HUD badge on screen
       ctx.save();
       const badgeX = pts[8].x;
       const badgeY = Math.max(40, pts[8].y - 40);
@@ -753,7 +565,6 @@
       ctx.textBaseline = 'middle';
       ctx.fillText(detected, badgeX, badgeY - 4);
 
-      // Stability ring around badge
       ctx.beginPath();
       ctx.arc(badgeX + 28, badgeY - 4, 8, -Math.PI / 2, -Math.PI / 2 + (Math.min(signCandidateCount, 12) / 12) * Math.PI * 2);
       ctx.strokeStyle = '#10B981';
@@ -890,7 +701,7 @@
     $('#wordCount').textContent = words.length + (words.length === 1 ? ' word' : ' words');
   }
 
-  // ---------- Mode 4: AR Face Masks ----------
+  // ---------- Mode 3: AR Face Masks ----------
   function preloadMasks() {
     fetch('masks/masks.json')
       .then((r) => r.json())
@@ -940,14 +751,10 @@
     const h = stageCanvas.height;
 
     for (const faceLm of results.multiFaceLandmarks) {
-      // Landmark 6 / 168: Nose bridge / Between eyes
-      // Landmark 234: Right temple
-      // Landmark 454: Left temple
       const centerLm = faceLm[168] || faceLm[6];
       const rightLm = faceLm[234];
       const leftLm = faceLm[454];
 
-      // Mirrored coordinates
       const cx = (1.0 - centerLm.x) * w;
       const cy = centerLm.y * h;
       const rx = (1.0 - rightLm.x) * w;
@@ -955,17 +762,14 @@
       const lx = (1.0 - leftLm.x) * w;
       const ly = leftLm.y * h;
 
-      // Calculate roll angle & face width
       const dx = rx - lx;
       const dy = ry - ly;
       const angle = Math.atan2(dy, dx);
       const faceWidth = Math.hypot(dx, dy);
 
-      // Desired mask width & height scaled to face
       const maskW = (faceWidth / curMask.fw) * 1.5;
       const maskH = maskW * (maskImg.naturalHeight / (maskImg.naturalWidth || 1));
 
-      // Draw rotated mask over face
       ctx.save();
       ctx.translate(cx, cy);
       ctx.rotate(angle);
@@ -1026,12 +830,9 @@
   }
 
   function extractHandFeatures(handLabel, rawLm) {
-    // 21 points (rawX, rawY)
     const pts = rawLm.map((p) => [handLabel === 'left' ? 1.0 - p.x : p.x, p.y]);
-    // Origin at wrist
     const origin = pts[0];
     const centered = pts.map((p) => [p[0] - origin[0], p[1] - origin[1]]);
-    // Scale by wrist to middle knuckle
     const scale = Math.hypot(centered[9][0], centered[9][1]) || 1e-6;
     const norm = centered.map((p) => [p[0] / scale, p[1] / scale]);
 
@@ -1039,14 +840,12 @@
     for (let i = 1; i < norm.length; i++) {
       feat.push(norm[i][0], norm[i][1]);
     }
-    // Tips pairwise distances (4, 8, 12, 16, 20)
     const tips = [4, 8, 12, 16, 20];
     for (let i = 0; i < tips.length; i++) {
       for (let j = i + 1; j < tips.length; j++) {
         feat.push(Math.hypot(norm[tips[i]][0] - norm[tips[j]][0], norm[tips[i]][1] - norm[tips[j]][1]));
       }
     }
-    // Tips to wrist distance
     for (const t of tips) {
       feat.push(Math.hypot(norm[t][0], norm[t][1]));
     }
@@ -1096,7 +895,6 @@
       }
     }
 
-    // Match threshold
     return minDistance < 1.2 ? bestLabel : null;
   }
 
@@ -1264,10 +1062,8 @@
     $$('.modes [data-mode]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === state.mode)));
     $$('.stage-bar [data-mode]').forEach((b) => b.classList.toggle('on', b.dataset.mode === state.mode));
     $$('#handSeg button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.hands === state.hands)));
-    $$('#smoothSeg button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.smooth === state.smoothing)));
 
     $('#boxHands').classList.toggle('hidden', state.mode === 'mask');
-    $('#boxMouse').classList.toggle('hidden', state.mode !== 'mouse');
     $('#boxSign').classList.toggle('hidden', state.mode !== 'sign');
     $('#boxAir').classList.toggle('hidden', state.mode !== 'air');
     $('#boxMask').classList.toggle('hidden', state.mode !== 'mask');
@@ -1294,21 +1090,14 @@
   }
 
   function renderHelp() {
-    const both = state.hands === 'both';
     const sets = {
-      mouse: [
-        'Mouse mode: how to use',
-        both
-          ? [
-              ['Right hand moves', 'Point your index finger to guide the glowing pointer.'],
-              ['Left hand clicks', 'Pinch thumb and index finger together to click.'],
-              ['Target bubbles', 'Try popping the interactive targets on screen!']
-            ]
-          : [
-              ['Raise index finger', `Point your ${state.hands} index finger to guide the pointer.`],
-              ['Pinch to click', 'Touch thumb and index finger together to click.'],
-              ['Target bubbles', 'Try popping the interactive target bubbles on screen!']
-            ]
+      air: [
+        'Air writing: how to use',
+        [
+          ['Point to write', 'Raise only your index finger. Move it to draw smooth strokes.'],
+          ['Fist to erase', 'Make a fist to erase locally. Hold for 1.5s to clear all.'],
+          ['Open hand to pause', 'Open your hand to move your finger without drawing.']
+        ]
       ],
       sign: [
         'Sign language: how to use',
@@ -1316,14 +1105,6 @@
           ['Show a letter', 'Hold hand steady in front of the camera.'],
           ['Watch stability ring', 'Letter is added once the circular indicator completes.'],
           ['Add space', 'Lower your hand for 1.5 seconds, or press the Add Space button.']
-        ]
-      ],
-      air: [
-        'Air writing: how to use',
-        [
-          ['Point to write', 'Raise only your index finger. Move it to draw smooth strokes.'],
-          ['Fist to erase', 'Make a fist to erase locally. Hold for 1.5s to clear all.'],
-          ['Open hand to pause', 'Open your hand to move your finger without drawing.']
         ]
       ],
       mask: [
@@ -1336,7 +1117,7 @@
       ]
     };
 
-    const [title, steps] = sets[state.mode] || sets.mouse;
+    const [title, steps] = sets[state.mode] || sets.air;
     $('#help').innerHTML =
       `<h3>${title}</h3>` +
       steps.map((s, i) => `<div class="step"><div class="n">${i + 1}</div><div><b>${s[0]}</b><span>${s[1]}</span></div></div>`).join('');
@@ -1368,17 +1149,10 @@
       })
     );
 
-    // Hands & Smoothing
+    // Hands
     $$('#handSeg button').forEach((b) =>
       b.addEventListener('click', () => {
         state.hands = b.dataset.hands;
-        render();
-        saveState();
-      })
-    );
-    $$('#smoothSeg button').forEach((b) =>
-      b.addEventListener('click', () => {
-        state.smoothing = b.dataset.smooth;
         render();
         saveState();
       })

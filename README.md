@@ -4,18 +4,15 @@ Gesture Control Suite is a modern, web-browser-based intelligent application tha
 
 **Key Features:**
 
-* **Virtual Mouse Control:** Seamlessly drive your system cursor purely through hand motion. Perform left/right clicks, dragging, and scrolling organically via gestures. Smooth predictive logic ensures jitter-free pointing.
-* **Air Writing Canvas:** Turn empty air into your personal whiteboard. Index finger draws; make a fist to erase specific sections locally; hold the fist for 1.5 seconds to wipe the entire board. Supports dynamic colors, customizable brush thickness, fully independent two-handed simultaneous drawing, and saving composited screenshots directly to your device.
-* **Sign Language Recognition:** Decode static shapes (A, B, D, F, I, L, V, W, Y) and dynamic motion strokes (J and Z) natively. An onboard `RandomForestClassifier` system allows anyone to "Teach" the system personalized signs or whole words directly from the UI within a handful of seconds, saving them to your custom dictionary `signs_dataset.json`.
-* **Face Masks:** Live dynamic augmented-reality masks utilizing highly optimized FaceMesh pipelines overlaid on the webcam feed.
+* **Air Writing Canvas:** Turn empty air into your personal whiteboard. Index finger draws; make a fist to erase specific sections locally; hold the fist for 1.5 seconds to wipe the entire board. Supports dynamic colors, customizable brush thickness, fully independent simultaneous drawing, and saving composited screenshots directly to your device.
+* **Sign Language Recognition:** Decode static shapes (A, B, D, F, I, L, V, W, Y) and dynamic motion strokes (J and Z) natively into full sentences with automatic spacing. An onboard machine learning system allows anyone to "Teach" the system personalized signs or whole words directly in the browser within seconds.
+* **AR Face Masks:** Live dynamic augmented-reality masks utilizing optimized 3D FaceMesh pipelines overlaid on the webcam feed with natural head tilt, scale, and rotation tracking.
 
 ## Technology Stack
 
-* **Backend Engine:** Flask (Python) with a robust multi-threaded server routing scheme bridging browser interactions to OS controls.
-* **Computer Vision:** MediaPipe's lightweight, rapid inference engine for 21-point hand tracking execution, driven by `cv2` (OpenCV).
-* **Machine Learning:** `scikit-learn` drives the personalized one-shot "Teach Sign" architecture securely via locally hosted Random Forests.
-* **Automation:** `pyautogui` connects python predictions into hard-OS level macro interactions and mouse events.
-* **Frontend:** Minimal, crisp Vanilla CSS and JS designed for highly-responsive feedback and beautiful UI/UX that requires zero complex front-end installations.
+* **Computer Vision & ML:** MediaPipe (Hands & FaceMesh) executing real-time landmark inference in the browser via WebAssembly and WebGL.
+* **Frontend:** Modern Vanilla CSS and JavaScript designed for instant, high-frame-rate interaction and beautiful UI/UX with zero build step required.
+* **Deployment Ready:** Configured for one-click deployment on Netlify.
 
 ## Quick Start
 1. Ensure your camera is accessible and functional.
