@@ -7,6 +7,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Caveat+Brush&family=Patrick+Hand&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
+<!-- MediaPipe Client-side Machine Learning -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
 </head>
 <body data-theme="teal">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
@@ -108,8 +112,9 @@
 
   <main class="app-main">
     <section id="stage" class="stage" aria-label="Camera">
-      <img id="feed" class="feed" alt="Live camera" hidden>
-      <div id="noFeed" class="no-feed"><p id="noFeedText">Camera preview appears here when the backend is running.</p></div>
+      <video id="webcam" playsinline autoplay muted style="position:absolute; width:1px; height:1px; opacity:0; pointer-events:none;"></video>
+      <canvas id="stageCanvas" class="feed" hidden></canvas>
+      <div id="noFeed" class="no-feed"><p id="noFeedText">Click "Turn camera on" to start.</p></div>
 
       <div class="status" id="status"><span class="dot"></span><span id="statusText">Camera on</span></div>
       <div class="stage-tools">
@@ -175,7 +180,7 @@
           <button data-size="thick"><b>Thick</b></button>
         </div>
         <button id="airClear" class="btn ghost full">Clear drawing</button>
-        <a id="airSave" class="btn ghost full" href="/api/air/image" download="air-writing.png">Save picture</a>
+        <button id="airSave" class="btn ghost full">Save picture</button>
         <p class="muted small">Point with only your index finger to write. Make a fist to erase. Hold the fist for 1.5 seconds to clear everything.</p>
       </div>
 
